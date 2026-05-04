@@ -1,0 +1,31 @@
+{
+  "_source": "Procafé Chile / ANCC — boletín 2023 sobre consumo de café",
+  "_retrieved": "2026-05-03",
+  "_url": "https://procafechile.cl/",
+  "_license": "Cifras públicas de la asociación gremial",
+  "_isDemo": false,
+  "_note": "Consumo per cápita anual de café en Chile y benchmarks regionales (kg/persona/año).",
+  "data": {
+    "consumoPerCapitaKgAno": 1.4,
+    "tazasPerCapitaAno": 220,
+    "tazasPerCapitaDia": 0.6,
+    "shareEspresso": 0.32,
+    "shareTradicional": 0.48,
+    "shareSoluble": 0.20,
+    "ticketPromedioCafeteriaCLP": 3200,
+    "benchmarks": {
+      "Chile": 1.4,
+      "Argentina": 1.0,
+      "Brasil": 5.6,
+      "Italia": 6.0,
+      "EEUU": 4.5
+    },
+    "tasaCapturaTipica": {
+      "muyBaja":      0.005,
+      "baja":         0.010,
+      "media":        0.020,
+      "alta":         0.035,
+      "muyAlta":      0.060
+    }
+  }
+}

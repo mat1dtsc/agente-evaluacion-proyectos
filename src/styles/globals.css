@@ -1,0 +1,222 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design system: Pro Dark Dashboard
+ * Inspirado en Mapbox Studio · Linear · Uber Movement
+ * Acento terracota #e8754a · Datos como protagonista
+ */
+
+@layer base {
+  :root {
+    /* Graphite scale (5 steps) */
+    --graphite-1: 220 28% 6%;     /* #0b0e13 */
+    --graphite-2: 222 25% 9%;     /* #10141d */
+    --graphite-3: 222 22% 13%;    /* #161c28 */
+    --graphite-4: 222 20% 18%;    /* #1f2735 */
+    --graphite-5: 222 18% 24%;    /* #262e3d */
+
+    /* Ink scale (5 steps) */
+    --ink-1: 220 28% 96%;         /* #f4f6fa */
+    --ink-2: 220 18% 78%;         /* #b9c0cf */
+    --ink-3: 220 14% 60%;         /* #8b94a6 */
+    --ink-4: 220 12% 42%;         /* #5d6577 */
+    --ink-5: 222 14% 28%;         /* #3f475a */
+
+    /* Map */
+    --map-land: 222 30% 14%;      /* #1a2030 */
+    --map-water: 220 32% 8%;      /* #0f141d */
+    --map-park: 144 22% 12%;      /* #18241f */
+
+    /* Accent */
+    --accent: 17 79% 60%;         /* #e8754a terracotta */
+    --accent-dim: 17 79% 38%;
+    --accent-foreground: 0 0% 100%;
+
+    --positive: 145 55% 55%;
+    --negative: 0 75% 65%;
+    --warning: 38 92% 60%;
+
+    /* Light theme tokens (fallback) */
+    --background: 220 28% 96%;
+    --foreground: 220 28% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 28% 12%;
+    --primary: 17 79% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 16% 92%;
+    --secondary-foreground: 220 28% 12%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 12% 42%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --warning-foreground: 26 83% 14%;
+    --success: 145 55% 45%;
+    --success-foreground: 0 0% 100%;
+    --border: 220 16% 88%;
+    --input: 220 16% 88%;
+    --ring: 17 79% 50%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: var(--graphite-1);
+    --foreground: var(--ink-1);
+    --card: var(--graphite-2);
+    --card-foreground: var(--ink-1);
+    --primary: 17 79% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--graphite-4);
+    --secondary-foreground: var(--ink-1);
+    --muted: var(--graphite-3);
+    --muted-foreground: var(--ink-3);
+    --destructive: 0 75% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 14% 18%;
+    --input: 220 14% 18%;
+    --ring: 17 79% 60%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html {
+    font-family: 'Geist', 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01", "ss02";
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  .dark body {
+    background-image:
+      radial-gradient(900px 500px at 5% -10%, hsl(17 79% 12% / 0.55) 0%, transparent 60%),
+      radial-gradient(700px 400px at 100% 110%, hsl(220 30% 12% / 0.6) 0%, transparent 60%);
+  }
+  .leaflet-container {
+    background: hsl(var(--muted));
+    font-family: inherit;
+  }
+}
+
+/* ===================== Tipografías editoriales ===================== */
+.font-serif-display {
+  font-family: 'Instrument Serif', 'Georgia', serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.font-mono-tabular,
+.tabular {
+  font-feature-settings: "tnum", "lnum";
+  font-variant-numeric: tabular-nums;
+}
+.font-mono {
+  font-family: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-feature-settings: "tnum";
+}
+
+/* ===================== Animaciones ===================== */
+@keyframes pulse-ring {
+  0%   { transform: scale(0.6); opacity: 0.85; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+@keyframes pulse-core {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.12); }
+}
+@keyframes bounce-soft {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(30px, -20px) scale(1.05); }
+  66%      { transform: translate(-20px, 25px) scale(0.95); }
+}
+
+.animate-bounce-soft  { animation: bounce-soft 2s ease-in-out infinite; }
+.animate-blob-drift   { animation: blob-drift 20s ease-in-out infinite; }
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 6s ease infinite;
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, hsl(var(--ring) / 0.18) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+}
+
+/* ===================== Pin del local ===================== */
+.pulse-pin {
+  position: relative;
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+}
+.pulse-ring {
+  position: absolute;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(232, 117, 74, 0.6);
+  animation: pulse-ring 1.6s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+.pulse-ring.delay-1 { animation-delay: 0.8s; }
+.pulse-core {
+  position: relative;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59470 0%, #c2410c 100%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px -2px rgba(232,117,74,0.6), inset 0 -2px 4px rgba(0,0,0,0.3);
+  animation: pulse-core 2s ease-in-out infinite;
+  border: 2px solid white;
+}
+.metro-pin { filter: drop-shadow(0 2px 4px rgba(232,117,74,0.4)); }
+
+/* ===================== Glassmorphism / overlays ===================== */
+.glass {
+  background: hsl(var(--card) / 0.85);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+.glass-elevated {
+  background: hsl(var(--card) / 0.92);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid hsl(var(--border));
+  box-shadow:
+    0 12px 40px -12px rgba(0,0,0,0.32),
+    inset 0 1px 0 hsl(var(--card) / 0.9);
+}
+.hairline { border-color: hsl(var(--border) / 0.6); }
+
+/* Gradient text */
+.gradient-text {
+  background-image: linear-gradient(135deg, hsl(var(--accent)) 0%, #f59470 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.shadow-glow-orange { box-shadow: 0 0 0 1px rgba(232,117,74,0.18), 0 12px 32px -8px rgba(232,117,74,0.4); }
+.shadow-glow-blue   { box-shadow: 0 0 0 1px rgba(37,99,235,0.18),  0 12px 32px -8px rgba(37,99,235,0.4); }
+
+/* ===================== Scrollbar ===================== */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.4); }
+
+.mi-local-marker { background: transparent !important; border: none !important; }
+.leaflet-marker-icon { background: transparent !important; }

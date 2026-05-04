@@ -1,0 +1,1034 @@
+{
+  "_source": "OSM railway=station + Memoria Metro Santiago 2023 (afluencia)",
+  "_retrieved": "2026-05-04",
+  "_url": "https://overpass-api.de + https://www.metro.cl/corporativo/memoria-anual",
+  "_license": "ODbL + cifras públicas",
+  "_isDemo": false,
+  "_note": "128 estaciones con coordenadas reales OSM. Afluencia anual desde Memoria 2023 (cifras publicadas) o estimada para nuevas estaciones.",
+  "data": [
+    {
+      "id": "toesca",
+      "nombre": "Toesca",
+      "linea": "L2",
+      "lat": -33.4529746,
+      "lng": -70.6585851,
+      "afluenciaAnualM": 5.2
+    },
+    {
+      "id": "rondizzoni",
+      "nombre": "Rondizzoni",
+      "linea": "L2",
+      "lat": -33.4696578,
+      "lng": -70.6563736,
+      "afluenciaAnualM": 6.3
+    },
+    {
+      "id": "escuelamilitar",
+      "nombre": "Escuela Militar",
+      "linea": "L1",
+      "lat": -33.4134817,
+      "lng": -70.5826796,
+      "afluenciaAnualM": 10.8
+    },
+    {
+      "id": "alcantara",
+      "nombre": "Alcántara",
+      "linea": "L1",
+      "lat": -33.4154469,
+      "lng": -70.5899906,
+      "afluenciaAnualM": 6.8
+    },
+    {
+      "id": "elgolf",
+      "nombre": "El Golf",
+      "linea": "L1",
+      "lat": -33.4166189,
+      "lng": -70.5957077,
+      "afluenciaAnualM": 8.2
+    },
+    {
+      "id": "tobalaba",
+      "nombre": "Tobalaba",
+      "linea": "L1/L4",
+      "lat": -33.4182154,
+      "lng": -70.6014872,
+      "afluenciaAnualM": 22.4
+    },
+    {
+      "id": "pedrodevaldivia",
+      "nombre": "Pedro de Valdivia",
+      "linea": "L1",
+      "lat": -33.425483,
+      "lng": -70.6137959,
+      "afluenciaAnualM": 9.5
+    },
+    {
+      "id": "manuelmontt",
+      "nombre": "Manuel Montt",
+      "linea": "L1",
+      "lat": -33.4285532,
+      "lng": -70.6196465,
+      "afluenciaAnualM": 9.2
+    },
+    {
+      "id": "universidadcatolica",
+      "nombre": "Universidad Católica",
+      "linea": "L1",
+      "lat": -33.4397617,
+      "lng": -70.6398924,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "santalucia",
+      "nombre": "Santa Lucía",
+      "linea": "L1",
+      "lat": -33.4424649,
+      "lng": -70.6447442,
+      "afluenciaAnualM": 8.7
+    },
+    {
+      "id": "republica",
+      "nombre": "República",
+      "linea": "L1",
+      "lat": -33.447702,
+      "lng": -70.6671366,
+      "afluenciaAnualM": 13.8
+    },
+    {
+      "id": "unionlatinoamericana",
+      "nombre": "Unión Latinoamericana",
+      "linea": "L1",
+      "lat": -33.4493623,
+      "lng": -70.673351,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "estacioncentral",
+      "nombre": "Estación Central",
+      "linea": "L1",
+      "lat": -33.4508228,
+      "lng": -70.6789622,
+      "afluenciaAnualM": 19.5
+    },
+    {
+      "id": "cristobalcolon",
+      "nombre": "Cristóbal Colón",
+      "linea": "L4",
+      "lat": -33.4263163,
+      "lng": -70.5909808,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "franciscobilbao",
+      "nombre": "Francisco Bilbao",
+      "linea": "L4",
+      "lat": -33.4317928,
+      "lng": -70.584703,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "principedegales",
+      "nombre": "Príncipe de Gales",
+      "linea": "L4",
+      "lat": -33.4392047,
+      "lng": -70.5731497,
+      "afluenciaAnualM": 9.5
+    },
+    {
+      "id": "simonbolivar",
+      "nombre": "Simón Bolívar",
+      "linea": "L4",
+      "lat": -33.4461845,
+      "lng": -70.5719261,
+      "afluenciaAnualM": 7.6
+    },
+    {
+      "id": "bellasartes",
+      "nombre": "Bellas Artes",
+      "linea": "L5",
+      "lat": -33.4366322,
+      "lng": -70.6441329,
+      "afluenciaAnualM": 11.2
+    },
+    {
+      "id": "cumming",
+      "nombre": "Cumming",
+      "linea": "L5",
+      "lat": -33.4391444,
+      "lng": -70.668534,
+      "afluenciaAnualM": 7.4
+    },
+    {
+      "id": "universidaddesantiago",
+      "nombre": "Universidad de Santiago",
+      "linea": "L1",
+      "lat": -33.4528554,
+      "lng": -70.6865552,
+      "afluenciaAnualM": 11.4
+    },
+    {
+      "id": "sanalbertohurtado",
+      "nombre": "San Alberto Hurtado",
+      "linea": "L1",
+      "lat": -33.4542019,
+      "lng": -70.6922721,
+      "afluenciaAnualM": 8.5
+    },
+    {
+      "id": "ecuador",
+      "nombre": "Ecuador",
+      "linea": "L1",
+      "lat": -33.4559226,
+      "lng": -70.6997325,
+      "afluenciaAnualM": 6.1
+    },
+    {
+      "id": "lasrejas",
+      "nombre": "Las Rejas",
+      "linea": "L1",
+      "lat": -33.4575386,
+      "lng": -70.7067561,
+      "afluenciaAnualM": 8.4
+    },
+    {
+      "id": "pajaritos",
+      "nombre": "Pajaritos",
+      "linea": "L1",
+      "lat": -33.4574748,
+      "lng": -70.7154469,
+      "afluenciaAnualM": 16.5
+    },
+    {
+      "id": "santaisabel",
+      "nombre": "Santa Isabel",
+      "linea": "L5",
+      "lat": -33.4471204,
+      "lng": -70.6304343,
+      "afluenciaAnualM": 12
+    },
+    {
+      "id": "mirador",
+      "nombre": "Mirador",
+      "linea": "L5",
+      "lat": -33.5133028,
+      "lng": -70.6059146,
+      "afluenciaAnualM": 9.1
+    },
+    {
+      "id": "pedrero",
+      "nombre": "Pedrero",
+      "linea": "L5",
+      "lat": -33.5079499,
+      "lng": -70.6124467,
+      "afluenciaAnualM": 8.4
+    },
+    {
+      "id": "caminoagricola",
+      "nombre": "Camino Agrícola",
+      "linea": "L5",
+      "lat": -33.4917907,
+      "lng": -70.6175195,
+      "afluenciaAnualM": 7
+    },
+    {
+      "id": "carlosvaldovinos",
+      "nombre": "Carlos Valdovinos",
+      "linea": "L5",
+      "lat": -33.4863985,
+      "lng": -70.6191824,
+      "afluenciaAnualM": 7.5
+    },
+    {
+      "id": "rodrigodearaya",
+      "nombre": "Rodrigo de Araya",
+      "linea": "L5",
+      "lat": -33.4778167,
+      "lng": -70.6222636,
+      "afluenciaAnualM": 8.4
+    },
+    {
+      "id": "parqueohiggins",
+      "nombre": "Parque O'Higgins",
+      "linea": "L2",
+      "lat": -33.4608472,
+      "lng": -70.6568466,
+      "afluenciaAnualM": 9.1
+    },
+    {
+      "id": "quintanormal",
+      "nombre": "Quinta Normal",
+      "linea": "L5",
+      "lat": -33.440368,
+      "lng": -70.6802912,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "losorientales",
+      "nombre": "Los Orientales",
+      "linea": "L4",
+      "lat": -33.4626181,
+      "lng": -70.5739242,
+      "afluenciaAnualM": 7.5
+    },
+    {
+      "id": "grecia",
+      "nombre": "Grecia",
+      "linea": "L4",
+      "lat": -33.4695344,
+      "lng": -70.5765034,
+      "afluenciaAnualM": 9.8
+    },
+    {
+      "id": "lospresidentes",
+      "nombre": "Los Presidentes",
+      "linea": "L4",
+      "lat": -33.479837,
+      "lng": -70.5786662,
+      "afluenciaAnualM": 7.5
+    },
+    {
+      "id": "quilin",
+      "nombre": "Quilín",
+      "linea": "L4",
+      "lat": -33.4882637,
+      "lng": -70.5804178,
+      "afluenciaAnualM": 9
+    },
+    {
+      "id": "lastorres",
+      "nombre": "Las Torres",
+      "linea": "L4",
+      "lat": -33.499108,
+      "lng": -70.5865459,
+      "afluenciaAnualM": 7.8
+    },
+    {
+      "id": "macul",
+      "nombre": "Macul",
+      "linea": "L4",
+      "lat": -33.5092379,
+      "lng": -70.5900473,
+      "afluenciaAnualM": 6.8
+    },
+    {
+      "id": "rojasmagallanes",
+      "nombre": "Rojas Magallanes",
+      "linea": "L4",
+      "lat": -33.5361069,
+      "lng": -70.5926966,
+      "afluenciaAnualM": 8.6
+    },
+    {
+      "id": "trinidad",
+      "nombre": "Trinidad",
+      "linea": "L4",
+      "lat": -33.5462943,
+      "lng": -70.5881027,
+      "afluenciaAnualM": 7.4
+    },
+    {
+      "id": "losquillayes",
+      "nombre": "Los Quillayes",
+      "linea": "L4",
+      "lat": -33.5612253,
+      "lng": -70.5852697,
+      "afluenciaAnualM": 7.2
+    },
+    {
+      "id": "elisacorrea",
+      "nombre": "Elisa Correa",
+      "linea": "L4",
+      "lat": -33.5692937,
+      "lng": -70.5838076,
+      "afluenciaAnualM": 9.1
+    },
+    {
+      "id": "hospitalsoterodelrio",
+      "nombre": "Hospital Sótero del Río",
+      "linea": "L4",
+      "lat": -33.5768981,
+      "lng": -70.582317,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "protectoradelainfancia",
+      "nombre": "Protectora de la Infancia",
+      "linea": "L4",
+      "lat": -33.5895738,
+      "lng": -70.579833,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "bellavistadelaflorida",
+      "nombre": "Bellavista de La Florida",
+      "linea": "L5",
+      "lat": -33.5195217,
+      "lng": -70.6000253,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "cementerios",
+      "nombre": "Cementerios",
+      "linea": "L2",
+      "lat": -33.4139806,
+      "lng": -70.643597,
+      "afluenciaAnualM": 6.5
+    },
+    {
+      "id": "zapadores",
+      "nombre": "Zapadores",
+      "linea": "L2",
+      "lat": -33.3909444,
+      "lng": -70.6424385,
+      "afluenciaAnualM": 5.5
+    },
+    {
+      "id": "dorsal",
+      "nombre": "Dorsal",
+      "linea": "L2",
+      "lat": -33.3969616,
+      "lng": -70.6427404,
+      "afluenciaAnualM": 6.4
+    },
+    {
+      "id": "vespucionorte",
+      "nombre": "Vespucio Norte",
+      "linea": "L2",
+      "lat": -33.3807538,
+      "lng": -70.6463404,
+      "afluenciaAnualM": 8.4
+    },
+    {
+      "id": "elllano",
+      "nombre": "El Llano",
+      "linea": "L2",
+      "lat": -33.4826014,
+      "lng": -70.6493814,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "sanmiguel",
+      "nombre": "San Miguel",
+      "linea": "L2",
+      "lat": -33.4887157,
+      "lng": -70.6510725,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "lovial",
+      "nombre": "Lo Vial",
+      "linea": "L2",
+      "lat": -33.4968286,
+      "lng": -70.6530148,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "departamental",
+      "nombre": "Departamental",
+      "linea": "L2",
+      "lat": -33.5024398,
+      "lng": -70.6546333,
+      "afluenciaAnualM": 8.5
+    },
+    {
+      "id": "ciudaddelnino",
+      "nombre": "Ciudad del Niño",
+      "linea": "L2",
+      "lat": -33.5095432,
+      "lng": -70.6566453,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "loovalle",
+      "nombre": "Lo Ovalle",
+      "linea": "L2",
+      "lat": -33.5172701,
+      "lng": -70.6588205,
+      "afluenciaAnualM": 12.8
+    },
+    {
+      "id": "elparron",
+      "nombre": "El Parrón",
+      "linea": "L2",
+      "lat": -33.5264317,
+      "lng": -70.6614044,
+      "afluenciaAnualM": 9.4
+    },
+    {
+      "id": "santajulia",
+      "nombre": "Santa Julia",
+      "linea": "L4A",
+      "lat": -33.5311022,
+      "lng": -70.6055361,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "lagranja",
+      "nombre": "La Granja",
+      "linea": "L4A",
+      "lat": -33.5411298,
+      "lng": -70.616047,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "santarosa",
+      "nombre": "Santa Rosa",
+      "linea": "L4A",
+      "lat": -33.5423878,
+      "lng": -70.6341267,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "sanramon",
+      "nombre": "San Ramón",
+      "linea": "L4A",
+      "lat": -33.5412286,
+      "lng": -70.6431272,
+      "afluenciaAnualM": 7.9
+    },
+    {
+      "id": "manquehue",
+      "nombre": "Manquehue",
+      "linea": "L1",
+      "lat": -33.4094637,
+      "lng": -70.5697326,
+      "afluenciaAnualM": 6.4
+    },
+    {
+      "id": "hernandodemagallanes",
+      "nombre": "Hernando de Magallanes",
+      "linea": "L1",
+      "lat": -33.4079352,
+      "lng": -70.5558454,
+      "afluenciaAnualM": 4.5
+    },
+    {
+      "id": "losdominicos",
+      "nombre": "Los Dominicos",
+      "linea": "L1",
+      "lat": -33.4078854,
+      "lng": -70.5449939,
+      "afluenciaAnualM": 9.1
+    },
+    {
+      "id": "barrancas",
+      "nombre": "Barrancas",
+      "linea": "L5",
+      "lat": -33.4529813,
+      "lng": -70.739037,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "lagunasur",
+      "nombre": "Laguna Sur",
+      "linea": "L5",
+      "lat": -33.4621633,
+      "lng": -70.7379067,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "lasparcelas",
+      "nombre": "Las Parcelas",
+      "linea": "L5",
+      "lat": -33.4752719,
+      "lng": -70.7399789,
+      "afluenciaAnualM": 5.8
+    },
+    {
+      "id": "montetabor",
+      "nombre": "Monte Tabor",
+      "linea": "L5",
+      "lat": -33.4822861,
+      "lng": -70.7454383,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "lasmercedes",
+      "nombre": "Las Mercedes",
+      "linea": "L4",
+      "lat": -33.6013816,
+      "lng": -70.5774783,
+      "afluenciaAnualM": 5.3
+    },
+    {
+      "id": "sanjosedelaestrella",
+      "nombre": "San José de la Estrella",
+      "linea": "L4",
+      "lat": -33.5538213,
+      "lng": -70.5865567,
+      "afluenciaAnualM": 6.9
+    },
+    {
+      "id": "parquebustamante",
+      "nombre": "Parque Bustamante",
+      "linea": "L5",
+      "lat": -33.4428037,
+      "lng": -70.6319594,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "grutadelourdes",
+      "nombre": "Gruta de Lourdes",
+      "linea": "L5",
+      "lat": -33.438011,
+      "lng": -70.6910279,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "blanqueado",
+      "nombre": "Blanqueado",
+      "linea": "L5",
+      "lat": -33.4413214,
+      "lng": -70.7066515,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "pudahuel",
+      "nombre": "Pudahuel",
+      "linea": "L5",
+      "lat": -33.4448632,
+      "lng": -70.7411438,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "loprado",
+      "nombre": "Lo Prado",
+      "linea": "L5",
+      "lat": -33.4434094,
+      "lng": -70.7167535,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "santiagobueras",
+      "nombre": "Santiago Bueras",
+      "linea": "L5",
+      "lat": -33.4962414,
+      "lng": -70.7574349,
+      "afluenciaAnualM": 8
+    },
+    {
+      "id": "santaana",
+      "nombre": "Santa Ana",
+      "linea": "L2/L5",
+      "lat": -33.4382499,
+      "lng": -70.6598961,
+      "afluenciaAnualM": 11.3
+    },
+    {
+      "id": "plazadepuentealto",
+      "nombre": "Plaza de Puente Alto",
+      "linea": "L4",
+      "lat": -33.6095235,
+      "lng": -70.5758419,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "salvador",
+      "nombre": "Salvador",
+      "linea": "L1",
+      "lat": -33.4327195,
+      "lng": -70.6260885,
+      "afluenciaAnualM": 10.1
+    },
+    {
+      "id": "delsol",
+      "nombre": "Del Sol",
+      "linea": "L5",
+      "lat": -33.4902363,
+      "lng": -70.7531153,
+      "afluenciaAnualM": 7.1
+    },
+    {
+      "id": "presidentepedroaguirrecerda",
+      "nombre": "Presidente Pedro Aguirre Cerda",
+      "linea": "L1",
+      "lat": -33.4786906,
+      "lng": -70.6647874,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "biobio",
+      "nombre": "Bío Bío",
+      "linea": "L1",
+      "lat": -33.4766072,
+      "lng": -70.6421784,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "inesdesuarez",
+      "nombre": "Inés de Suárez",
+      "linea": "L1",
+      "lat": -33.438721,
+      "lng": -70.6073371,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "nuble",
+      "nombre": "Ñuble",
+      "linea": "L5/L6",
+      "lat": -33.4673629,
+      "lng": -70.6247567,
+      "afluenciaAnualM": 11.7
+    },
+    {
+      "id": "sanpablo",
+      "nombre": "San Pablo",
+      "linea": "L1/L5",
+      "lat": -33.4442061,
+      "lng": -70.7231838,
+      "afluenciaAnualM": 14.2
+    },
+    {
+      "id": "patronato",
+      "nombre": "Patronato",
+      "linea": "L2",
+      "lat": -33.4297317,
+      "lng": -70.6471183,
+      "afluenciaAnualM": 9.3
+    },
+    {
+      "id": "cerroblanco",
+      "nombre": "Cerro Blanco",
+      "linea": "L2",
+      "lat": -33.4227505,
+      "lng": -70.6450582,
+      "afluenciaAnualM": 6.7
+    },
+    {
+      "id": "einstein",
+      "nombre": "Einstein",
+      "linea": "L2",
+      "lat": -33.4059459,
+      "lng": -70.6431738,
+      "afluenciaAnualM": 6
+    },
+    {
+      "id": "baquedano",
+      "nombre": "Baquedano",
+      "linea": "L1/L5",
+      "lat": -33.4372174,
+      "lng": -70.6334109,
+      "afluenciaAnualM": 18.7
+    },
+    {
+      "id": "monsenoreyzaguirre",
+      "nombre": "Monseñor Eyzaguirre",
+      "linea": "L3",
+      "lat": -33.4531944,
+      "lng": -70.613519,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "chileespana",
+      "nombre": "Chile España",
+      "linea": "L3",
+      "lat": -33.4549078,
+      "lng": -70.5981422,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "villafrei",
+      "nombre": "Villa Frei",
+      "linea": "L3",
+      "lat": -33.4546697,
+      "lng": -70.5814833,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "losheroes",
+      "nombre": "Los Héroes",
+      "linea": "L1/L2",
+      "lat": -33.4461853,
+      "lng": -70.6604458,
+      "afluenciaAnualM": 16.3
+    },
+    {
+      "id": "loslibertadores",
+      "nombre": "Los Libertadores",
+      "linea": "L3",
+      "lat": -33.3654303,
+      "lng": -70.6919903,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "cerrillos",
+      "nombre": "Cerrillos",
+      "linea": "L1",
+      "lat": -33.4834342,
+      "lng": -70.6955562,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "lamoneda",
+      "nombre": "La Moneda",
+      "linea": "L1",
+      "lat": -33.4448711,
+      "lng": -70.6548709,
+      "afluenciaAnualM": 14
+    },
+    {
+      "id": "plazademaipu",
+      "nombre": "Plaza de Maipú",
+      "linea": "L5",
+      "lat": -33.5099332,
+      "lng": -70.7573092,
+      "afluenciaAnualM": 16.4
+    },
+    {
+      "id": "lovalledor",
+      "nombre": "Lo Valledor",
+      "linea": "L1",
+      "lat": -33.4784048,
+      "lng": -70.6809001,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "estadionacional",
+      "nombre": "Estadio Nacional",
+      "linea": "L1",
+      "lat": -33.4623809,
+      "lng": -70.6062176,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "neptuno",
+      "nombre": "Neptuno",
+      "linea": "L1",
+      "lat": -33.4515804,
+      "lng": -70.7226828,
+      "afluenciaAnualM": 6.9
+    },
+    {
+      "id": "franklin",
+      "nombre": "Franklin",
+      "linea": "L1",
+      "lat": -33.4766603,
+      "lng": -70.6494774,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "elbosque",
+      "nombre": "El Bosque",
+      "linea": "L2",
+      "lat": -33.5465722,
+      "lng": -70.6667515,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "observatorio",
+      "nombre": "Observatorio",
+      "linea": "L2",
+      "lat": -33.560404,
+      "lng": -70.6705486,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "copalomartinez",
+      "nombre": "Copa Lo Martínez",
+      "linea": "L2",
+      "lat": -33.5706669,
+      "lng": -70.6733824,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "hospitalelpino",
+      "nombre": "Hospital El Pino",
+      "linea": "L2",
+      "lat": -33.5828788,
+      "lng": -70.6768121,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "ferrocarril",
+      "nombre": "Ferrocarril",
+      "linea": "L3",
+      "lat": -33.3654667,
+      "lng": -70.7055375,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "locruzat",
+      "nombre": "Lo Cruzat",
+      "linea": "L3",
+      "lat": -33.3668342,
+      "lng": -70.719772,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "plazaquilicura",
+      "nombre": "Plaza Quilicura",
+      "linea": "L3",
+      "lat": -33.3657194,
+      "lng": -70.7288942,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "parquealmagro",
+      "nombre": "Parque Almagro",
+      "linea": "L3",
+      "lat": -33.4513929,
+      "lng": -70.6505616,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "sanjoaquin",
+      "nombre": "San Joaquín",
+      "linea": "L5",
+      "lat": -33.4993359,
+      "lng": -70.6158257,
+      "afluenciaAnualM": 9.1
+    },
+    {
+      "id": "alameda",
+      "nombre": "Alameda",
+      "linea": "L1",
+      "lat": -33.452344,
+      "lng": -70.6790609,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "losleones",
+      "nombre": "Los Leones",
+      "linea": "L1/L6",
+      "lat": -33.422019,
+      "lng": -70.6085607,
+      "afluenciaAnualM": 12.1
+    },
+    {
+      "id": "lacisterna",
+      "nombre": "La Cisterna",
+      "linea": "L2",
+      "lat": -33.5373498,
+      "lng": -70.6643328,
+      "afluenciaAnualM": 13.5
+    },
+    {
+      "id": "matta",
+      "nombre": "Matta",
+      "linea": "L3",
+      "lat": -33.4582698,
+      "lng": -70.6430769,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "hospitales",
+      "nombre": "Hospitales",
+      "linea": "L3",
+      "lat": -33.4176739,
+      "lng": -70.6564558,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "plazachacabuco",
+      "nombre": "Plaza Chacabuco",
+      "linea": "L3",
+      "lat": -33.4067715,
+      "lng": -70.6609686,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "conchali",
+      "nombre": "Conchalí",
+      "linea": "L3",
+      "lat": -33.3978904,
+      "lng": -70.6695999,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "vivaceta",
+      "nombre": "Vivaceta",
+      "linea": "L3",
+      "lat": -33.3853813,
+      "lng": -70.6796401,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "cardenalcaro",
+      "nombre": "Cardenal Caro",
+      "linea": "L3",
+      "lat": -33.3732586,
+      "lng": -70.6863362,
+      "afluenciaAnualM": 8.5
+    },
+    {
+      "id": "plazadearmas",
+      "nombre": "Plaza de Armas",
+      "linea": "L5",
+      "lat": -33.4374154,
+      "lng": -70.6512777,
+      "afluenciaAnualM": 18.5
+    },
+    {
+      "id": "puentecalycanto",
+      "nombre": "Puente Cal y Canto",
+      "linea": "L2/L3",
+      "lat": -33.4328384,
+      "lng": -70.6530774,
+      "afluenciaAnualM": 12.7
+    },
+    {
+      "id": "universidaddechile",
+      "nombre": "Universidad de Chile",
+      "linea": "L1/L3",
+      "lat": -33.443867,
+      "lng": -70.6506654,
+      "afluenciaAnualM": 24.6
+    },
+    {
+      "id": "irarrazaval",
+      "nombre": "Irarrázaval",
+      "linea": "L5",
+      "lat": -33.4550535,
+      "lng": -70.6283154,
+      "afluenciaAnualM": 12.9
+    },
+    {
+      "id": "nunoa",
+      "nombre": "Ñuñoa",
+      "linea": "L1",
+      "lat": -33.4541894,
+      "lng": -70.604972,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "plazaegana",
+      "nombre": "Plaza Egaña",
+      "linea": "L4/L3",
+      "lat": -33.4534937,
+      "lng": -70.570823,
+      "afluenciaAnualM": 10.4
+    },
+    {
+      "id": "fernandocastillovelasco",
+      "nombre": "Fernando Castillo Velasco",
+      "linea": "L3",
+      "lat": -33.4521007,
+      "lng": -70.558107,
+      "afluenciaAnualM": 5
+    },
+    {
+      "id": "vicentevaldes",
+      "nombre": "Vicente Valdés",
+      "linea": "L4/L5",
+      "lat": -33.5264186,
+      "lng": -70.5967924,
+      "afluenciaAnualM": 14.8
+    },
+    {
+      "id": "vicunamackenna",
+      "nombre": "Vicuña Mackenna",
+      "linea": "L4",
+      "lat": -33.5197638,
+      "lng": -70.5962095,
+      "afluenciaAnualM": 11.3
+    },
+    {
+      "id": "paine",
+      "nombre": "Paine",
+      "linea": "?",
+      "lat": -33.8160671,
+      "lng": -70.7436049,
+      "afluenciaAnualM": 5
+    }
+  ]
+}

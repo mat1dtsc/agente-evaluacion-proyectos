@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+dist-ssr/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+.vite/
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# ETL cache (descargas crudas Overpass que se procesan a /public/data)
+scripts/etl/_cache/
+
+# Local env vars
+.env
+.env.local
+.env.*.local
+
+# Screenshots de desarrollo (opcional — comenta si los quieres versionar)
+screenshots/
+
+# Claude artifacts
+.claude/launch.json
