@@ -4,12 +4,62 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Agente de Evaluación de Proyectos · Retail Food Chile</title>
-    <meta name="description" content="Herramienta para evaluar proyectos retail food en Chile con datos geográficos, demográficos y modelo financiero." />
+    <meta name="theme-color" content="#EA580C" />
+
+    <title>Agente de Evaluación de Proyectos · Retail Food Chile · MBA UAH 2026</title>
+    <meta name="description" content="Plataforma React + deck.gl 3D para evaluar proyectos retail food en cualquier punto de Chile. Datos OSM live, modelo financiero VAN/TIR/payback, 60 períodos mensuales, normativas chilenas, exportadores Word/Excel." />
+    <meta name="author" content="MBA UAH 2026 · Curso Evaluación de Proyectos" />
+    <meta name="keywords" content="evaluación de proyectos, retail food, Chile, VAN, TIR, MBA UAH, deck.gl, OSM, Santiago" />
+
+    <!-- Open Graph (Facebook, LinkedIn, WhatsApp, Slack, Discord, Claude, ChatGPT) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Agente de Evaluación de Proyectos · Retail Food Chile" />
+    <meta property="og:description" content="Mapa 3D interactivo + modelo financiero + normativas chilenas + exportadores Word/Excel. Construido para el curso EVP del MBA UAH 2026." />
+    <meta property="og:url" content="https://agente-evaluacion-proyectos.vercel.app/" />
+    <meta property="og:site_name" content="Agente Evaluación de Proyectos" />
+    <meta property="og:locale" content="es_CL" />
+    <meta property="og:image" content="https://agente-evaluacion-proyectos.vercel.app/hero/dashboard-light.png" />
+    <meta property="og:image:width" content="2700" />
+    <meta property="og:image:height" content="1440" />
+    <meta property="og:image:alt" content="Dashboard del agente con mapa 3D de Santiago, capas demográficas y panel financiero" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Agente de Evaluación de Proyectos · Retail Food Chile" />
+    <meta name="twitter:description" content="Mapa 3D + modelo financiero + normativas chilenas para evaluar retail food en cualquier punto del país." />
+    <meta name="twitter:image" content="https://agente-evaluacion-proyectos.vercel.app/hero/dashboard-light.png" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://agente-evaluacion-proyectos.vercel.app/" />
+
+    <!-- Stylesheets externas -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+
+    <!-- JSON-LD Schema (para crawlers IA y buscadores) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Agente de Evaluación de Proyectos",
+      "url": "https://agente-evaluacion-proyectos.vercel.app/",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web Browser",
+      "description": "Herramienta web para evaluar la factibilidad técnica, comercial, normativa y financiera de proyectos retail food en cualquier punto de Chile. Combina mapa 3D con datos demográficos INE/CASEN, transporte público en vivo (OSM Overpass), modelo financiero VAN/TIR a 60 períodos mensuales, marco normativo chileno y exportadores Word/Excel.",
+      "creator": {
+        "@type": "Organization",
+        "name": "MBA UAH 2026 · Curso Evaluación de Proyectos"
+      },
+      "inLanguage": "es-CL",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
   </head>
   <body class="bg-background text-foreground">
     <div id="root"></div>
