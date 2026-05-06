@@ -55,25 +55,36 @@ export const NORMATIVAS_RETAIL_FOOD: NormativaChilena[] = [
   },
   {
     codigo: 'INFORME_SANITARIO',
-    nombre: 'Informe Sanitario SEREMI',
+    nombre: 'Informe Sanitario SEREMI · Categoría manipulación mínima',
     organismo: 'SEREMI de Salud RM',
-    descripcion: 'Resolución sanitaria favorable para elaboración y venta de alimentos. Requiere visita inspectiva.',
+    descripcion: 'Resolución sanitaria obligatoria para todo local que expenda alimentos al público. Para una cafetería con combo envasado (sin cocina) aplica la CATEGORÍA MÁS SIMPLE: "Establecimiento de alimentos · manipulación mínima · preparación de bebidas calientes". Arancel y plazo menor que un restaurant.',
     tipo: 'sanitario',
-    costoCLP: 280_000, // estimado: arancel SEREMI + adecuaciones
+    costoCLP: 180_000, // arancel SEREMI categoría simple + adecuaciones menores
     obligatorio: true,
-    base_legal: 'DS 977/96 Reglamento Sanitario de los Alimentos',
-    tramite: 'Solicitud en SEREMI Salud RM, croquis de instalaciones, manual de procedimientos higiénico-sanitarios, certificado de manipuladores.',
+    base_legal: 'DS 977/96 Reglamento Sanitario de los Alimentos · Art. 3°',
+    tramite: 'Solicitud SEREMI Salud RM con: croquis instalaciones, certificación manipuladores, contratos proveedores con factura+certificado sanitario, plan limpieza simplificado. Visita inspectiva 1 vez. NO requiere manual HACCP completo (categoría sin elaboración).',
   },
   {
     codigo: 'CURSO_MANIPULADORES',
     nombre: 'Curso Manipulador de Alimentos',
     organismo: 'OTEC autorizada / SEREMI Salud',
-    descripcion: 'Certificación obligatoria para todo personal que manipule alimentos.',
+    descripcion: 'Certificación obligatoria para personal que manipule alimentos. APLICA AUNQUE NO PREPARES alimento: pasar el sándwich envasado al cliente, preparar el espresso, o simplemente servir café cuenta como manipulación. Mínimo 1-2 personas certificadas en una cafetería.',
     tipo: 'sanitario',
     costoCLP: 35_000, // por persona
     obligatorio: true,
     base_legal: 'Art. 60 DS 977/96',
-    tramite: 'Curso de 10 horas en OTEC autorizada por SEREMI. Vigencia 3 años.',
+    tramite: 'Curso 10 horas en OTEC autorizada por SEREMI (INACAP, AIEP, OTECs cafeteras). Vigencia 3 años. Costo por persona; estimado en presupuesto inicial = 2-3 personas.',
+  },
+  {
+    codigo: 'TRAZABILIDAD_PROVEEDORES',
+    nombre: 'Trazabilidad de proveedores de alimento envasado',
+    organismo: 'SEREMI Salud (revisión anual)',
+    descripcion: 'Para una cafetería con combo envasado, la SEREMI exige documentar la cadena de suministro: factura de cada lote, certificado sanitario del fabricante, número de resolución sanitaria del proveedor, fecha vencimiento y cadena de frío. NO requiere fabricación propia pero sí registro completo.',
+    tipo: 'sanitario',
+    costoCLP: 0,
+    obligatorio: true,
+    base_legal: 'DS 977/96 Art. 78 + Reglamento etiquetado nutricional Ley 20.606',
+    tramite: 'Carpeta digital o física con: contratos vigentes proveedores, facturas mensuales, certificados sanitarios renovados, registro temperatura cadena frío diaria. Auditable en cualquier visita SEREMI.',
   },
   {
     codigo: 'PERMISO_EDIFICACION',

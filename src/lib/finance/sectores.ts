@@ -67,57 +67,57 @@ const TCC_POR_RIESGO: Record<1 | 2 | 3 | 4 | 5, number> = {
 };
 
 export const SECTORES_RETAIL_FOOD: SectorPreset[] = [
-  // ========== 1. CAFÉ EXPRESS ==========
+  // ========== 1. CAFÉ EXPRESS — COMBO ÚNICO ENVASADO (BASE DEL PROYECTO) ==========
   {
     id: 'cafe_express',
-    nombre: 'Café Express (combo único)',
+    nombre: 'Café Express · Combo Envasado',
     emoji: '☕',
-    descripcion: 'Barra rápida con combo único (espresso + croissant). 1-2 baristas, ticket alto, sin servicio en mesa. Ideal zonas oficina/universitarias con flujo peatonal alto en horario punta.',
-    ejemploReal: 'Drip Café · R3 Coffee · Café del Mundo barra · The Coffee',
-    riesgo: 3,
+    descripcion: 'Modelo simple: espresso preparado al momento + producto envasado del proveedor (croissant, sandwich o snack en pack individual sellado). SIN cocina, SIN preparación de alimentos. Solo bebida caliente + retail. 1-2 baristas, ticket medio-alto, alta rotación. Ideal zonas oficina con flujo peatonal en horario punta.',
+    ejemploReal: 'Stand-up coffee bar tipo barra alta · Cafés en lobby corporativo · Modelo "Drip Café compact"',
+    riesgo: 2,
     inversion: {
       desglose: [
-        { item: 'Máquina espresso 2-grupos profesional (Astoria/La Cimbali)', costoCLP: 8_500_000, vidaUtilSII: 7 },
-        { item: 'Molino cónico semiautomático', costoCLP: 1_200_000, vidaUtilSII: 5 },
-        { item: 'Vitrina refrigerada croissants y bollería', costoCLP: 1_800_000, vidaUtilSII: 7 },
-        { item: 'Mobiliario y barra (carpintería a medida)', costoCLP: 5_500_000, vidaUtilSII: 10 },
-        { item: 'Caja registradora + POS + lector tarjetas', costoCLP: 650_000, vidaUtilSII: 5 },
-        { item: 'Habilitación eléctrica trifásica + sanitaria', costoCLP: 3_200_000, vidaUtilSII: 20 },
-        { item: 'Letrero + diseño marca + branding', costoCLP: 1_150_000, vidaUtilSII: 5 },
-        { item: 'Filtro descalcificador + suavizador agua', costoCLP: 850_000, vidaUtilSII: 10 },
-        { item: 'Tazas, vasos take-away, utensilios iniciales', costoCLP: 600_000, vidaUtilSII: 3 },
-        { item: 'Sistema sonido ambiental', costoCLP: 350_000, vidaUtilSII: 5 },
-        { item: 'Mesas y sillas (zona consumo barra alta)', costoCLP: 2_800_000, vidaUtilSII: 7 },
-        { item: 'Otros equipos menores y reservas', costoCLP: 3_400_000, vidaUtilSII: 5 },
+        { item: 'Máquina espresso 2-grupos semiautomática', costoCLP: 6_500_000, vidaUtilSII: 7, notas: 'Modelo simple sin tecnología avanzada' },
+        { item: 'Molino cónico semiautomático', costoCLP: 1_100_000, vidaUtilSII: 5 },
+        { item: 'Vitrina refrigerada compacta para alimentos envasados', costoCLP: 1_200_000, vidaUtilSII: 7, notas: 'Solo display + cadena de frío, no exhibidora gourmet' },
+        { item: 'Mobiliario y barra (carpintería simple a medida)', costoCLP: 3_500_000, vidaUtilSII: 10 },
+        { item: 'POS + lector tarjetas + impresora boletas', costoCLP: 650_000, vidaUtilSII: 5 },
+        { item: 'Habilitación eléctrica + sanitaria básica', costoCLP: 2_200_000, vidaUtilSII: 20, notas: 'Sin extracción industrial, sin lavavajillas grado HORECA' },
+        { item: 'Letrero + diseño marca + branding', costoCLP: 950_000, vidaUtilSII: 5 },
+        { item: 'Filtro descalcificador agua', costoCLP: 550_000, vidaUtilSII: 10 },
+        { item: 'Vasos take-away iniciales + tapas + sleeves + accesorios', costoCLP: 450_000, vidaUtilSII: 3 },
+        { item: '4 mesas altas + 8 piso (zona consumo rápido)', costoCLP: 1_500_000, vidaUtilSII: 7 },
+        { item: 'Permisos + curso manipuladores + resolución sanitaria SEREMI', costoCLP: 700_000, vidaUtilSII: 3, notas: 'Categoría "manipulación mínima" + 2 cert manipuladores' },
+        { item: 'Otros equipos menores + reservas + contingencia 5%', costoCLP: 1_200_000, vidaUtilSII: 5 },
       ],
       capitalTrabajoMeses: 4,
       permisosIniciales: 700_000,
     },
     operacion: {
       ticketPromedio: 3_500,
-      costoVariableUnitario: 900,
-      costosFijosNoLaboralesMensuales: 1_900_000,
+      costoVariableUnitario: 1_100, // alimento envasado tiene mayor margen pagado al proveedor
+      costosFijosNoLaboralesMensuales: 1_500_000, // arriendo modular menor + servicios + insumos no var
       diasOperacionAno: 312,
       crecimientoDemandaAnual: 0.05,
       horizonteAnos: 5,
     },
     personal: [
-      { cargo: 'Barista jefe', cantidad: 1, sueldoBrutoMensual: 850_000, jornada: 'completa' },
-      { cargo: 'Barista', cantidad: 1, sueldoBrutoMensual: 650_000, jornada: 'completa' },
-      { cargo: 'Cajero/Asistente tarde', cantidad: 1, sueldoBrutoMensual: 580_000, jornada: 'completa' },
-      { cargo: 'Reemplazo/Aseo (½ jornada)', cantidad: 1, sueldoBrutoMensual: 510_636, jornada: 'parcial' },
+      { cargo: 'Barista jefe (manipulador certificado)', cantidad: 1, sueldoBrutoMensual: 850_000, jornada: 'completa' },
+      { cargo: 'Barista turno tarde (manipulador certificado)', cantidad: 1, sueldoBrutoMensual: 650_000, jornada: 'completa' },
+      { cargo: 'Reemplazo días libres / aseo', cantidad: 1, sueldoBrutoMensual: 510_636, jornada: 'parcial' },
     ],
     demanda: { base: 80, pesimista: 50, optimista: 130, unidad: 'combos/día' },
     financiamiento: {
       porcentajeDeudaSugerido: 0.40,
-      tasaBancoPYME: 0.10,
+      tasaBancoPYME: 0.095,
       plazoDeudaAnos: 5,
-      tasaCostoCapital: TCC_POR_RIESGO[3],
+      tasaCostoCapital: TCC_POR_RIESGO[2], // riesgo bajo: modelo simple, baja exposición sanitaria
     },
     fuentes: [
       'Procafé/ANCC: ticket promedio cafetería Chile ≈ $3.200',
       'Princess Food Service: catálogo equipamiento HORECA 2025',
-      'INE Encuesta CASEN: sueldos sector hostelería',
+      'DS 977/96 categoría manipulación mínima: SEREMI Salud RM',
+      'Convenio Procafé-INACAP: cursos manipuladores certificados',
     ],
   },
 
