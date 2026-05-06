@@ -33,10 +33,10 @@ export function SectorSelector({ onClose }: Props) {
             Onboarding
           </div>
           <h2 className="font-serif-display text-xl leading-tight">
-            Empieza con un rubro real
+            Elige el formato de tu cafetería
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            10 sectores precargados con equipamiento, ticket, costos y planilla típicos del retail food chileno (referenciales 2024-2025).
+            7 formatos de café precargados con equipamiento, ticket, costos y planilla típicos del sector cafetero chileno (referenciales 2024-2025).
           </p>
         </div>
         {onClose && (

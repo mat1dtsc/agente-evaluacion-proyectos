@@ -82,7 +82,7 @@ export function DemandPanel() {
                 <div>
                   <div className="text-xs font-bold">¿No sabes por dónde empezar?</div>
                   <div className="text-[10px] text-muted-foreground">
-                    Elige uno de 10 rubros precargados (café, restaurant, panadería, sushi, dark kitchen…)
+                    Elige uno de 7 formatos de cafetería precargados (express, especialidad, tradicional, franquicia, kiosco, coworking, tostador)
                   </div>
                 </div>
               </div>
