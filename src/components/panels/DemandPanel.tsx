@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useProjectStore } from '@/store/projectStore';
 import { useDensidad, useComunasGeoJSON, useProcafe, useMetro } from '@/hooks/useDatasets';
 import { useBusStopsNearby } from '@/hooks/useOSMOverpass';
@@ -11,6 +11,8 @@ import { Label } from '../ui/Label';
 import { SourceCite } from '../ui/SourceCite';
 import { formatNumber, formatPct } from '@/lib/utils';
 import { NoLocationPlaceholder } from './NoLocationPlaceholder';
+import { SectorSelector } from './SectorSelector';
+import { Sparkles } from 'lucide-react';
 
 export function DemandPanel() {
   const location = useProjectStore((s) => s.location);
@@ -61,8 +63,37 @@ export function DemandPanel() {
 
   if (!location) return <NoLocationPlaceholder message="Selecciona un punto para estimar la demanda en su radio." />;
 
+  const [showSectorSelector, setShowSectorSelector] = useState(false);
+
   return (
     <div className="space-y-3">
+      {/* Onboarding: catálogo de sectores predefinidos chilenos */}
+      <Card className="border-accent/40 bg-gradient-to-br from-orange-50/60 to-amber-50/40 dark:from-orange-950/20 dark:to-amber-950/10">
+        <CardContent className="p-3">
+          {!showSectorSelector ? (
+            <button
+              onClick={() => setShowSectorSelector(true)}
+              className="flex w-full items-center justify-between gap-2 rounded-lg p-1 text-left transition hover:bg-card/60"
+            >
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/15">
+                  <Sparkles className="h-4 w-4 text-accent" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold">¿No sabes por dónde empezar?</div>
+                  <div className="text-[10px] text-muted-foreground">
+                    Elige uno de 10 rubros precargados (café, restaurant, panadería, sushi, dark kitchen…)
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs font-semibold text-accent">Elegir →</span>
+            </button>
+          ) : (
+            <SectorSelector onClose={() => setShowSectorSelector(false)} />
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Estimación de demanda</CardTitle>
