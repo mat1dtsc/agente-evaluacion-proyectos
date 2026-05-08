@@ -7,7 +7,7 @@ import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 import { METRO_COLORS } from '@/lib/geo/metroLines';
 import { useProjectStore } from '@/store/projectStore';
 import { useBusRoutes, useCasen, useComunasGeoJSON, useDensidad, useMetro, useMetroLineas, usePerfilHorarioZonas } from '@/hooks/useDatasets';
-import { useBusStopsNearby, useBusStopsRM, useCafesNearby, useTrafficStreetsNearby, useTrafficStreetsRM, useUrbanEquipmentRM } from '@/hooks/useOSMOverpass';
+import { useBusStopsNearby, useBusStopsRM, useCafesNearby, useTrafficStreetsNearby, useTrafficStreetsRM, useUrbanEquipmentRM, useUrbanEquipmentNearby } from '@/hooks/useOSMOverpass';
 import { calcularTodas, scoreUbicacion, veredicto, UBICACIONES } from '@/lib/finance/cafeModel';
 import { useSettingsStore } from '@/store/settingsStore';
 import { usePerfilHorario } from '@/hooks/useDatasets';
@@ -101,7 +101,19 @@ export function MapView3D({ containerClassName }: Props) {
   const { data: roads } = useTrafficStreetsNearby(location, radius);
   const { data: roadsRM, isLoading: loadingRoads } = useTrafficStreetsRM(layers.vehicular && !location);
   const { data: busStopsRM, isLoading: loadingPeatonal } = useBusStopsRM(layers.peatonal);
-  const { data: urbanPois, isLoading: loadingEquipment } = useUrbanEquipmentRM(layers.equipamiento);
+  // Equipamiento: usa nearby cuando hay location (rápido + relevante), RM si no.
+  // Para equipamiento usamos un radio más amplio (~1.2km) porque hospitales,
+  // universidades y malls importan más allá del radio del proyecto (caminata 10-15min).
+  const equipRadius = Math.max(radius * 2.5, 1200);
+  const { data: urbanPoisNearby, isLoading: loadingEquipNearby } = useUrbanEquipmentNearby(
+    layers.equipamiento && location ? location : null,
+    equipRadius,
+  );
+  const { data: urbanPoisRM, isLoading: loadingEquipRM } = useUrbanEquipmentRM(
+    layers.equipamiento && !location,
+  );
+  const urbanPois = location ? urbanPoisNearby : urbanPoisRM;
+  const loadingEquipment = location ? loadingEquipNearby : loadingEquipRM;
   const { data: perfilRM } = usePerfilHorario();
   const { data: perfilZonas } = usePerfilHorarioZonas();
   const dayType = useProjectStore((s) => s.dayType);

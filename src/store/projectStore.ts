@@ -117,10 +117,10 @@ export const useProjectStore = create<ProjectState>()(
         ingreso: false,
         peatonal: true,
         metro: true,
-        paraderos: false,
-        competencia: true,   // ON por defecto: visualizar competencia es crítico
+        paraderos: true,     // ON: ver transporte público nearby al proyecto
+        competencia: true,   // ON: visualizar densidad de cafés competidores
         vehicular: false,
-        equipamiento: false,
+        equipamiento: true,  // ON: hospitales, universidades, malls cercanos
         busRoutes: false,
       },
       toggleLayer: (k) => set((s) => ({ activeLayers: { ...s.activeLayers, [k]: !s.activeLayers[k] } })),

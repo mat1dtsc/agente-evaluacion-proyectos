@@ -109,6 +109,71 @@ export function useUrbanEquipmentRM(enabled: boolean) {
   });
 }
 
+/**
+ * Equipamiento urbano cerca de un punto (radio configurable).
+ * Mucho más rápido y relevante que el query de toda la RM.
+ * Cuando se selecciona una zona pre-evaluada, este hook trae solo los
+ * hospitales, universidades y malls dentro del radio del proyecto.
+ */
+async function queryUrbanEquipmentNearby(
+  center: { lat: number; lng: number },
+  radiusMeters: number,
+): Promise<UrbanPOI[]> {
+  const around = `(around:${radiusMeters},${center.lat},${center.lng})`;
+  const query = `
+    [out:json][timeout:30];
+    (
+      node["amenity"="hospital"]${around};
+      way["amenity"="hospital"]${around};
+      node["amenity"="university"]${around};
+      way["amenity"="university"]${around};
+      node["amenity"="college"]${around};
+      way["amenity"="college"]${around};
+      node["amenity"="school"]${around};
+      way["amenity"="school"]${around};
+      node["shop"="mall"]${around};
+      way["shop"="mall"]${around};
+    );
+    out center;
+  `.trim();
+  const res = await fetch(OVERPASS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `data=${encodeURIComponent(query)}`,
+  });
+  if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`);
+  const data = await res.json();
+  const elements: any[] = data.elements ?? [];
+  const out: UrbanPOI[] = [];
+  for (const el of elements) {
+    const lat = el.lat ?? el.center?.lat;
+    const lng = el.lon ?? el.center?.lon;
+    if (!lat || !lng) continue;
+    const tags = el.tags ?? {};
+    let cat: UrbanPOI['category'];
+    if (tags.amenity === 'hospital') cat = 'hospital';
+    else if (tags.amenity === 'university' || tags.amenity === 'college') cat = 'university';
+    else if (tags.amenity === 'school') cat = 'school';
+    else if (tags.shop === 'mall') cat = 'mall';
+    else continue;
+    out.push({ id: `${el.type}-${el.id}`, lat, lng, name: tags.name ?? cat, category: cat });
+  }
+  return out;
+}
+
+export function useUrbanEquipmentNearby(
+  center: { lat: number; lng: number } | null,
+  radiusMeters: number,
+) {
+  return useQuery<UrbanPOI[]>({
+    queryKey: ['overpass-urban-nearby', center?.lat?.toFixed(4), center?.lng?.toFixed(4), radiusMeters],
+    queryFn: () => queryUrbanEquipmentNearby(center!, radiusMeters),
+    enabled: !!center,
+    staleTime: 1000 * 60 * 30,
+    retry: 1,
+  });
+}
+
 export function useTrafficStreetsNearby(center: { lat: number; lng: number } | null, radiusMeters: number) {
   return useQuery<OverpassRoadSegment[]>({
     queryKey: ['overpass-roads', center?.lat?.toFixed(4), center?.lng?.toFixed(4), radiusMeters],

@@ -5,7 +5,7 @@
  * Click en una card → centra el mapa en esa ubicación + carga sus parámetros
  * en el modelo financiero (a través del store).
  */
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown, AlertTriangle, MapPin, Coffee, Crown, Trophy, Shield, Scale, Sparkles } from 'lucide-react';
 import {
@@ -31,6 +31,27 @@ export function ZonasPanel() {
   }, [escenarioActivo]);
 
   const ganadora = resultados[0];
+
+  // Auto-selección de la ganadora en el primer load (si no hay zona seleccionada).
+  // Esto activa las queries de OSM (cafés, paraderos, equipamiento nearby) inmediatamente,
+  // así el usuario llega al mapa con todo el contexto cargado.
+  useEffect(() => {
+    if (!selectedId && ganadora) {
+      setSelectedId(ganadora.u.id);
+      setLocation({ lat: ganadora.u.lat, lng: ganadora.u.lng, label: ganadora.u.nombre });
+      updateInputs({
+        ticketPromedio: ganadora.u.ticketPromedio,
+        costoVariableUnitario: ganadora.u.costoVariableUnitario,
+        combosPorDiaBase: ganadora.u.combosDiaBase,
+        tasaCostoCapital: sup.tcc,
+        crecimientoDemanda: sup.gDemanda,
+        crecimientoPerpetuidad: sup.gDemanda,
+        tasaImpuesto: 0.25,
+        proPyme: true,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleSelect(r: ResultadoCompleto) {
     setSelectedId(r.u.id);
