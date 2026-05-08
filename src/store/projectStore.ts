@@ -60,6 +60,10 @@ export interface ProjectState {
   selectedLocationId: string | null;
   setSelectedLocationId: (id: string | null) => void;
 
+  // Escenario de calibración del modelo
+  escenarioActivo: 'conservador' | 'intermedio' | 'optimista';
+  setEscenarioActivo: (e: 'conservador' | 'intermedio' | 'optimista') => void;
+
   // Filtro temporal — afecta heatmap peatonal en vivo
   dayType: 'lunes_viernes' | 'sabado' | 'domingo';
   hour: number; // 0..23
@@ -146,6 +150,9 @@ export const useProjectStore = create<ProjectState>()(
       selectedLocationId: null,
       setSelectedLocationId: (selectedLocationId) => set({ selectedLocationId }),
 
+      escenarioActivo: 'conservador',
+      setEscenarioActivo: (escenarioActivo) => set({ escenarioActivo }),
+
       dayType: 'lunes_viernes',
       hour: 13,
       setDayType: (dayType) => set({ dayType }),
@@ -159,6 +166,8 @@ export const useProjectStore = create<ProjectState>()(
         inputs: state.inputs,
         tasaCaptura: state.tasaCaptura,
         projectName: state.projectName,
+        escenarioActivo: state.escenarioActivo,
+        selectedLocationId: state.selectedLocationId,
       }),
     },
   ),

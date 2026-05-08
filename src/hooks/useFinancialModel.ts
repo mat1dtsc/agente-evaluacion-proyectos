@@ -56,6 +56,7 @@ function detalleAcashFlow(
 export function useFinancialModel(): FinancialModelOutput {
   const inputs = useProjectStore((s) => s.inputs);
   const selectedLocationId = useProjectStore((s) => s.selectedLocationId);
+  const escenarioActivo = useProjectStore((s) => s.escenarioActivo);
 
   return useMemo(() => {
     // Si hay zona pre-evaluada seleccionada → usar el cafeModel corregido
@@ -64,21 +65,19 @@ export function useFinancialModel(): FinancialModelOutput {
       : null;
 
     if (ubic) {
-      const base = calcularUbicacion(ubic, 'base');
-      const pesimista = calcularUbicacion(ubic, 'pesimista');
+      const base = calcularUbicacion(ubic, 'base', escenarioActivo);
+      const pesimista = calcularUbicacion(ubic, 'pesimista', escenarioActivo);
 
       // Construimos un FinancialResult equivalente desde el detalle anual
       const cashFlow = detalleAcashFlow(base.detalleAnual, CAPEX, base.capitalTrabajo);
 
       // Break-even REAL: búsqueda binaria sobre combos/día que hace VAN = 0
-      // (en lugar de la aproximación basada en margen por combo)
       const breakevenCombos = (() => {
         let lo = 1, hi = ubic.combosDiaBase * 3;
-        // Si en hi el VAN sigue negativo, no hay break-even alcanzable
-        if (calcularUbicacion({ ...ubic, combosDiaBase: hi }, 'base').van < 0) return Infinity;
+        if (calcularUbicacion({ ...ubic, combosDiaBase: hi }, 'base', escenarioActivo).van < 0) return Infinity;
         for (let i = 0; i < 40; i += 1) {
           const mid = (lo + hi) / 2;
-          const v = calcularUbicacion({ ...ubic, combosDiaBase: mid }, 'base').van;
+          const v = calcularUbicacion({ ...ubic, combosDiaBase: mid }, 'base', escenarioActivo).van;
           if (Math.abs(v) < 100_000) return Math.round(mid);
           if (v > 0) hi = mid; else lo = mid;
         }
@@ -139,7 +138,7 @@ export function useFinancialModel(): FinancialModelOutput {
       flujoMensualInversionista,
       usandoModeloCorregido: false,
     };
-  }, [inputs, selectedLocationId]);
+  }, [inputs, selectedLocationId, escenarioActivo]);
 }
 
 /**

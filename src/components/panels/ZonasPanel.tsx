@@ -7,10 +7,10 @@
  */
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, AlertTriangle, MapPin, Coffee, Crown, Trophy } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle, MapPin, Coffee, Crown, Trophy, Shield, Scale, Sparkles } from 'lucide-react';
 import {
-  calcularTodas, scoreUbicacion, veredicto, TCC, MULT_EBITDA_TERMINAL,
-  G_DEMANDA, COMISION_TARJETAS, type ResultadoCompleto,
+  calcularTodas, scoreUbicacion, veredicto, ESCENARIOS,
+  type ResultadoCompleto, type Escenario,
 } from '@/lib/finance/cafeModel';
 import { useProjectStore } from '@/store/projectStore';
 import { formatCLP, formatPct } from '@/lib/utils';
@@ -20,26 +20,29 @@ export function ZonasPanel() {
   const setSelectedId = useProjectStore((s) => s.setSelectedLocationId);
   const setLocation = useProjectStore((s) => s.setLocation);
   const updateInputs = useProjectStore((s) => s.updateInputs);
+  const escenarioActivo = useProjectStore((s) => s.escenarioActivo);
+  const setEscenarioActivo = useProjectStore((s) => s.setEscenarioActivo);
+  const sup = ESCENARIOS[escenarioActivo];
 
   const resultados = useMemo(() => {
-    const r = calcularTodas();
+    const r = calcularTodas(escenarioActivo);
     r.sort((a, b) => b.base.van - a.base.van);
     return r;
-  }, []);
+  }, [escenarioActivo]);
 
   const ganadora = resultados[0];
 
   function handleSelect(r: ResultadoCompleto) {
     setSelectedId(r.u.id);
     setLocation({ lat: r.u.lat, lng: r.u.lng, label: r.u.nombre });
-    // Sincronizar inputs financieros con la ubicación
+    // Sincronizar inputs financieros con la ubicación + escenario
     updateInputs({
       ticketPromedio: r.u.ticketPromedio,
       costoVariableUnitario: r.u.costoVariableUnitario,
       combosPorDiaBase: r.u.combosDiaBase,
-      tasaCostoCapital: TCC,
-      crecimientoDemanda: G_DEMANDA,
-      crecimientoPerpetuidad: G_DEMANDA,
+      tasaCostoCapital: sup.tcc,
+      crecimientoDemanda: sup.gDemanda,
+      crecimientoPerpetuidad: sup.gDemanda,
       tasaImpuesto: 0.25,
       proPyme: true,
     });
@@ -77,11 +80,49 @@ export function ZonasPanel() {
         </div>
       </motion.div>
 
-      {/* Aviso modelo corregido */}
-      <div className="rounded-lg border border-blue-500/30 bg-blue-50/60 px-3 py-2 text-[10.5px] dark:bg-blue-950/20">
-        <div className="font-semibold text-blue-700 dark:text-blue-400">📊 Modelo corregido (mayo 2026)</div>
-        <div className="mt-0.5 text-muted-foreground">
-          Costos fijos reales · Comisión tarjetas · Valor terminal por múltiplo EBITDA ({MULT_EBITDA_TERMINAL}x) · Tcc {formatPct(TCC, 0)} retail food · g {formatPct(G_DEMANDA, 1)} · comisión {formatPct(COMISION_TARJETAS, 1)}
+      {/* Toggle de escenarios — calibración del modelo */}
+      <div className="rounded-xl border border-border/60 bg-card/80 p-2.5">
+        <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold">
+          <Scale className="h-3.5 w-3.5 text-accent" />
+          <span>Escenario de evaluación</span>
+        </div>
+        <div className="grid grid-cols-3 gap-1.5">
+          {(['conservador', 'intermedio', 'optimista'] as Escenario[]).map((esc) => {
+            const active = escenarioActivo === esc;
+            const meta = ESCENARIOS[esc];
+            const Icon = esc === 'conservador' ? Shield : esc === 'intermedio' ? Scale : Sparkles;
+            const tones = {
+              conservador: active ? 'border-rose-500 bg-rose-500/15 text-rose-700 dark:text-rose-400' : 'hover:border-rose-500/40 hover:bg-rose-500/5',
+              intermedio:  active ? 'border-amber-500 bg-amber-500/15 text-amber-700 dark:text-amber-400' : 'hover:border-amber-500/40 hover:bg-amber-500/5',
+              optimista:   active ? 'border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400' : 'hover:border-emerald-500/40 hover:bg-emerald-500/5',
+            }[esc];
+            return (
+              <button
+                key={esc}
+                onClick={() => setEscenarioActivo(esc)}
+                className={`flex flex-col items-center gap-1 rounded-lg border-2 p-2 transition-all ${active ? tones : `border-border/50 bg-card text-muted-foreground ${tones}`}`}
+              >
+                <Icon className="h-4 w-4" strokeWidth={2.5} />
+                <span className="text-[10.5px] font-bold">{meta.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-2 rounded-md bg-muted/40 px-2 py-1.5 text-[10px] text-muted-foreground">
+          {sup.descripcion}
+        </div>
+        <div className="mt-1.5 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[9.5px] text-muted-foreground">
+          <span>Tcc <strong className="text-foreground">{formatPct(sup.tcc, 0)}</strong></span>
+          <span>·</span>
+          <span>g <strong className="text-foreground">{formatPct(sup.gDemanda, 1)}</strong></span>
+          <span>·</span>
+          <span>Mult VT <strong className="text-foreground">{sup.multTerminal}x</strong></span>
+          <span>·</span>
+          <span>Días/año <strong className="text-foreground">{sup.diasOper}</strong></span>
+          <span>·</span>
+          <span>Planilla <strong className="text-foreground">{sup.planillaMensual > 0 ? `${(sup.planillaMensual / 1_000_000).toFixed(1)}M` : '2.94M (3 pers.)'}</strong></span>
+          <span>·</span>
+          <span>CFNL <strong className="text-foreground">{(sup.costosFijosNoLab / 1_000).toFixed(0)}k</strong></span>
         </div>
       </div>
 
@@ -114,8 +155,10 @@ interface ZoneCardProps {
 }
 
 function ZoneCard({ r, rank, selected, onSelect }: ZoneCardProps) {
+  const escenario = useProjectStore((s) => s.escenarioActivo);
+  const tccActivo = ESCENARIOS[escenario].tcc;
   const v = veredicto(r);
-  const score = scoreUbicacion(r);
+  const score = scoreUbicacion(r, escenario);
   const tirOk = Number.isFinite(r.base.tir);
   const pbOk = Number.isFinite(r.base.payback) && r.base.payback > 0 && r.base.payback <= 5;
 
@@ -202,7 +245,7 @@ function ZoneCard({ r, rank, selected, onSelect }: ZoneCardProps) {
             <MicroKPI
               label="TIR"
               value={tirOk ? formatPct(r.base.tir, 0) : '—'}
-              accent={tirOk && r.base.tir > TCC ? 'green' : 'red'}
+              accent={tirOk && r.base.tir > tccActivo ? 'green' : 'red'}
             />
             <MicroKPI
               label="Payback"

@@ -129,18 +129,21 @@ export function MapView3D({ containerClassName }: Props) {
   const selectedLocationId = useProjectStore((s) => s.selectedLocationId);
   const setSelectedLocationId = useProjectStore((s) => s.setSelectedLocationId);
 
+  const escenarioActivo = useProjectStore((s) => s.escenarioActivo);
+
   // Calcular puntuaciones del modelo para los pins de las 7 zonas pre-evaluadas
+  // Se recomputa cuando cambia el escenario activo
   const zonasPreEvaluadas = useMemo(() => {
-    const r = calcularTodas();
+    const r = calcularTodas(escenarioActivo);
     return r.map((res) => ({
       ...res.u,
       van: res.base.van,
       tir: res.base.tir,
       payback: res.base.payback,
-      score: scoreUbicacion(res),
+      score: scoreUbicacion(res, escenarioActivo),
       veredicto: veredicto(res).tono, // 'positivo' | 'neutral' | 'negativo'
     }));
-  }, []);
+  }, [escenarioActivo]);
 
   // Auto-fly cuando location cambia (solo entonces — no en cada render)
   // De este modo el usuario puede hacer pan/zoom libremente sin que la cámara

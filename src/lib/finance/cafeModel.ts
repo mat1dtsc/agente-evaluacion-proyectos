@@ -74,6 +74,71 @@ export const VIDA_PROMEDIO = Math.round(
 export const DEP_ANUAL = CAPEX / VIDA_PROMEDIO;
 
 // ============================================================
+// ESCENARIOS DE EVALUACIÓN
+// ============================================================
+// El modelo soporta tres calibraciones del set de supuestos macro,
+// todas defendibles académicamente con distintos sesgos:
+//
+//  conservador  → due diligence dura. Refleja la realidad del 50%
+//                 de fracaso en retail food chileno
+//  intermedio   → decisión de inversión normal. Asume operación
+//                 optimizada (planilla 2 personas + costos al inicio)
+//  optimista    → escenario favorable. β menor, g mayor, costos
+//                 optimizados. Útil para techo de upside
+//
+// La diferencia entre conservador y optimista equivale a $50-90M
+// de VAN en la ubicación ganadora — ilustra cuán sensible es el
+// modelo a calibración de supuestos.
+
+export type Escenario = 'conservador' | 'intermedio' | 'optimista';
+
+export interface SupuestosEscenario {
+  tcc: number;
+  gDemanda: number;
+  multTerminal: number;
+  comisionTarjetas: number;
+  costosFijosNoLab: number;
+  planillaMensual: number;
+  diasOper: number;
+}
+
+export const ESCENARIOS: Record<Escenario, SupuestosEscenario & { label: string; descripcion: string }> = {
+  conservador: {
+    label: 'Conservador',
+    descripcion: 'Due diligence rigurosa. Tcc 14%, planilla 3 personas, costos fijos auditados $850k, 6 días/sem.',
+    tcc: 0.14,
+    gDemanda: 0.025,
+    multTerminal: 3.5,
+    comisionTarjetas: 0.028,
+    costosFijosNoLab: 850_000,
+    planillaMensual: 0,  // se calcula con PLANILLA real
+    diasOper: 312,
+  },
+  intermedio: {
+    label: 'Intermedio',
+    descripcion: 'Operación optimizada. Planilla 2 personas $2M, costos fijos $560k al iniciar, 6 días/sem.',
+    tcc: 0.14,
+    gDemanda: 0.025,
+    multTerminal: 3.5,
+    comisionTarjetas: 0.028,
+    costosFijosNoLab: 560_000,
+    planillaMensual: 2_000_000,
+    diasOper: 312,
+  },
+  optimista: {
+    label: 'Optimista',
+    descripcion: 'β 1.0 (Tcc 12%), g 3% sectorial, 7 días/sem, planilla y costos optimizados.',
+    tcc: 0.12,
+    gDemanda: 0.03,
+    multTerminal: 4.0,
+    comisionTarjetas: 0.028,
+    costosFijosNoLab: 560_000,
+    planillaMensual: 2_000_000,
+    diasOper: 360,
+  },
+};
+
+// ============================================================
 // TIPOS
 // ============================================================
 export interface UbicacionDef {
@@ -285,19 +350,39 @@ function calcularTIR(cashflows: number[], guess = 0.15): number {
 // ============================================================
 // CÁLCULO POR UBICACIÓN
 // ============================================================
+/**
+ * Calcula el flujo y los KPIs para una ubicación en un escenario dado.
+ *
+ * @param u           Ubicación definida (parámetros de la zona)
+ * @param caso        Caso de demanda: 'base' | 'pesimista' | 'optimista'
+ * @param escenario   Calibración de supuestos macro: 'conservador' | 'intermedio' | 'optimista'.
+ *                    Si es undefined, usa 'conservador' (modelo auditado).
+ */
 export function calcularUbicacion(
   u: UbicacionDef,
-  escenario: 'base' | 'pesimista' | 'optimista' = 'base'
+  caso: 'base' | 'pesimista' | 'optimista' = 'base',
+  escenario: Escenario = 'conservador'
 ): ResultadoUbicacion {
-  const escKey = ('combosDia' + escenario.charAt(0).toUpperCase() + escenario.slice(1)) as keyof UbicacionDef;
+  const supuestos = ESCENARIOS[escenario];
+  const tcc = supuestos.tcc;
+  const gDemanda = supuestos.gDemanda;
+  const multTerminal = supuestos.multTerminal;
+  const comision = supuestos.comisionTarjetas;
+  const costosNoLabSupuesto = supuestos.costosFijosNoLab;
+  const planillaSupuesto = supuestos.planillaMensual > 0
+    ? supuestos.planillaMensual
+    : PLANILLA_MENSUAL_TOTAL;
+  const diasOper = supuestos.diasOper;
+
+  const escKey = ('combosDia' + caso.charAt(0).toUpperCase() + caso.slice(1)) as keyof UbicacionDef;
   const combosDia = (u[escKey] as number) ?? u.combosDiaBase;
 
   const arriendoMensual = u.arriendoUFm2 * u.m2 * UF;
   const cv = u.costoVariableUnitario;
-  const costosFijosNoLab = arriendoMensual + u.gastosComunesCLP + u.contribucionesMensualCLP + COSTOS_FIJOS_NO_LAB_TOTAL;
-  const costosFijosTotal = costosFijosNoLab + PLANILLA_MENSUAL_TOTAL;
+  const costosFijosNoLab = arriendoMensual + u.gastosComunesCLP + u.contribucionesMensualCLP + costosNoLabSupuesto;
+  const costosFijosTotal = costosFijosNoLab + planillaSupuesto;
 
-  const egresosAnualesAprox = costosFijosTotal * 12 + cv * combosDia * DIAS_OPER_ANO;
+  const egresosAnualesAprox = costosFijosTotal * 12 + cv * combosDia * diasOper;
   const KT = Math.round((egresosAnualesAprox / 12) * 2.5);
   const inversionTotal = CAPEX + KT;
 
@@ -310,12 +395,12 @@ export function calcularUbicacion(
 
   let creditoFiscal = 0;
   for (let t = 1; t <= HORIZONTE_ANOS; t += 1) {
-    const factorDemanda = Math.pow(1 + G_DEMANDA, t - 1);
-    const combosAno = combosDia * DIAS_OPER_ANO * factorDemanda;
+    const factorDemanda = Math.pow(1 + gDemanda, t - 1);
+    const combosAno = combosDia * diasOper * factorDemanda;
     const ingresos = combosAno * u.ticketPromedio;
     const cvTotal = combosAno * cv;
     const cfTotal = costosFijosTotal * 12;
-    const comisiones = ingresos * COMISION_TARJETAS;
+    const comisiones = ingresos * comision;
     const ebitda = ingresos - cvTotal - cfTotal - comisiones;
     const dep = t <= VIDA_PROMEDIO ? DEP_ANUAL : 0;
     const ebit = ebitda - dep;
@@ -336,7 +421,7 @@ export function calcularUbicacion(
     if (t === HORIZONTE_ANOS) {
       recuperoKT = KT;
       valorResidual = CAPEX * 0.10 * (1 - TASA_IMPUESTO);
-      valorTerminal = ebitda * MULT_EBITDA_TERMINAL * (1 - TASA_IMPUESTO);
+      valorTerminal = ebitda * multTerminal * (1 - TASA_IMPUESTO);
       flujoNeto += recuperoKT + valorResidual + valorTerminal;
     }
 
@@ -352,7 +437,7 @@ export function calcularUbicacion(
     flujos.push(flujoNeto);
   }
 
-  const van = flujos.reduce((s, f, i) => s + f / Math.pow(1 + TCC, i), 0);
+  const van = flujos.reduce((s, f, i) => s + f / Math.pow(1 + tcc, i), 0);
   const tir = calcularTIR(flujos);
 
   let acc = 0;
@@ -378,18 +463,18 @@ export function calcularUbicacion(
     van: Math.round(van),
     tir,
     payback,
-    ingresosAno1: Math.round(combosDia * DIAS_OPER_ANO * u.ticketPromedio),
+    ingresosAno1: Math.round(combosDia * diasOper * u.ticketPromedio),
     ebitdaAno1: Math.round(detalleAnual[1].ebitda),
     margenContrib: (u.ticketPromedio - cv) / u.ticketPromedio,
   };
 }
 
-export function calcularTodas(): ResultadoCompleto[] {
+export function calcularTodas(escenario: Escenario = 'conservador'): ResultadoCompleto[] {
   return UBICACIONES.map((u) => ({
     u,
-    base: calcularUbicacion(u, 'base'),
-    pes: calcularUbicacion(u, 'pesimista'),
-    opt: calcularUbicacion(u, 'optimista'),
+    base: calcularUbicacion(u, 'base', escenario),
+    pes: calcularUbicacion(u, 'pesimista', escenario),
+    opt: calcularUbicacion(u, 'optimista', escenario),
   }));
 }
 
@@ -397,11 +482,12 @@ function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, v));
 }
 
-export function scoreUbicacion(r: ResultadoCompleto): number {
+export function scoreUbicacion(r: ResultadoCompleto, escenario: Escenario = 'conservador'): number {
   const { u, base, pes } = r;
+  const tccEsc = ESCENARIOS[escenario].tcc;
   const sVAN = clamp(base.van / 100_000_000, -1, 1) * 35;
   const tirSafe = Number.isFinite(base.tir) ? base.tir : -0.5;
-  const sTIR = clamp((tirSafe - TCC) / 0.30, -1, 1) * 20;
+  const sTIR = clamp((tirSafe - tccEsc) / 0.30, -1, 1) * 20;
   const sPayback = !Number.isFinite(base.payback) || base.payback < 0 ? -15
                    : clamp((4 - base.payback) / 4, -1, 1) * 15;
   const sResiliencia = pes.van > 0 ? 10
