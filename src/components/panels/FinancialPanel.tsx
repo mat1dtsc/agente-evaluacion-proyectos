@@ -221,25 +221,42 @@ export function FinancialPanel() {
         <CardContent className="flex flex-col gap-2">
           {model.usandoModeloCorregido ? (
             <>
+              <div className="rounded-md border border-blue-500/30 bg-blue-50/40 px-2 py-1.5 text-[10.5px] dark:bg-blue-950/15">
+                <strong className="text-blue-700 dark:text-blue-400">📦 Entregables del curso EVP UAH</strong>
+                <div className="mt-0.5 text-muted-foreground">Excel + PPT + Word ejecutivo (6 págs) son los 3 entregables formales del enunciado. El Word extendido es opcional (anexo de detalle para defensa).</div>
+              </div>
               <a
                 href="/exports/Analisis_Cafe_Combo_RM.xlsx"
                 download
                 className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 text-xs font-semibold text-emerald-700 transition-all hover:bg-emerald-500/20 dark:text-emerald-400"
               >
                 <FileSpreadsheet className="h-4 w-4" />
-                Análisis comparativo Excel (7 zonas, modelo auditado)
+                Excel modelo financiero (7 zonas, 11 hojas)
               </a>
               <a
-                href="/exports/Informe_Cafe_Combo_RM.docx"
+                href="/exports/Pitch_Cafe_Combo_RM.pptx"
+                download
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-purple-500/40 bg-purple-500/10 px-3 text-xs font-semibold text-purple-700 transition-all hover:bg-purple-500/20 dark:text-purple-400"
+              >
+                <Download className="h-4 w-4" />
+                PPT pitch deck (14 slides — para presentación)
+              </a>
+              <a
+                href="/exports/Informe_Cafe_Combo_RM_corto.docx"
                 download
                 className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 text-xs font-semibold text-blue-700 transition-all hover:bg-blue-500/20 dark:text-blue-400"
               >
                 <Download className="h-4 w-4" />
-                Informe académico Word (16 capítulos)
+                Word ejecutivo (6 páginas — formato curso)
               </a>
-              <div className="text-[10px] text-muted-foreground">
-                Estos archivos contienen las 7 zonas evaluadas + capítulo de auditoría del modelo. Para exportar un Excel personalizado con tus propios inputs editables, deselecciona la zona en el panel "Zonas".
-              </div>
+              <a
+                href="/exports/Informe_Cafe_Combo_RM.docx"
+                download
+                className="inline-flex h-8 items-center justify-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 text-[11px] text-muted-foreground transition-all hover:bg-muted/60"
+              >
+                <Download className="h-3 w-3" />
+                Word extendido — anexo opcional (35-45 págs, 16 capítulos + bibliografía)
+              </a>
             </>
           ) : (
             <>
