@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useProjectStore } from '@/store/projectStore';
-import { useMetro, usePerfilHorario } from '@/hooks/useDatasets';
+import { useMetro, usePerfilHorario, usePerfilHorarioZonas } from '@/hooks/useDatasets';
 import { useBusStopsNearby } from '@/hooks/useOSMOverpass';
 import { haversine } from '@/lib/geo/distanceUtils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
@@ -8,6 +8,7 @@ import { SourceCite } from '../ui/SourceCite';
 import { HourlyFlowChart } from '../charts/HourlyFlowChart';
 import { formatNumber } from '@/lib/utils';
 import { NoLocationPlaceholder } from './NoLocationPlaceholder';
+import { UBICACIONES } from '@/lib/finance/cafeModel';
 
 export function FlowPanel() {
   const location = useProjectStore((s) => s.location);
@@ -16,9 +17,27 @@ export function FlowPanel() {
   const hour = useProjectStore((s) => s.hour);
   const setDayType = useProjectStore((s) => s.setDayType);
   const setHour = useProjectStore((s) => s.setHour);
+  const selectedLocationId = useProjectStore((s) => s.selectedLocationId);
   const { data: metro } = useMetro();
   const { data: busStops, isLoading: loadingBusStops } = useBusStopsNearby(location, radius);
-  const { data: perfil } = usePerfilHorario();
+  const { data: perfilRM } = usePerfilHorario();
+  const { data: perfilZonas } = usePerfilHorarioZonas();
+
+  // Si hay zona pre-evaluada seleccionada, usar SU perfil horario
+  // (oficina/residencial/transit/universitario/mixto). Si no, usar el agregado RM.
+  const ubicacion = selectedLocationId
+    ? UBICACIONES.find((u) => u.id === selectedLocationId)
+    : null;
+  const perfilZonaActiva = ubicacion && perfilZonas?.tiposZona[ubicacion.tipoZona];
+  const perfil = perfilZonaActiva
+    ? {
+        perfilTransportePublico: perfilZonaActiva.perfilTransportePublico,
+        perfilVehicular: perfilZonaActiva.perfilVehicular,
+        _url: perfilRM?._url,
+        _retrieved: perfilRM?._retrieved,
+        _isDemo: perfilRM?._isDemo,
+      }
+    : perfilRM;
 
   const flujoPeatonalAhora = perfil?.perfilTransportePublico[dayType]?.[hour] ?? 0;
   const flujoVehicularAhora = perfil?.perfilVehicular[dayType]?.[hour] ?? 0;
@@ -60,6 +79,23 @@ export function FlowPanel() {
 
   return (
     <div className="space-y-3">
+      {/* Banner del perfil activo */}
+      {perfilZonaActiva && ubicacion ? (
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-50/50 px-3 py-2 text-[10.5px] dark:bg-emerald-950/20">
+          <div className="flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-400">
+            🎯 Perfil activo: <span className="capitalize">{ubicacion.tipoZona}</span>
+            <span className="font-normal text-muted-foreground">· {ubicacion.nombre}</span>
+          </div>
+          <div className="mt-0.5 text-[10px] text-muted-foreground">{perfilZonaActiva.peaks}</div>
+          <div className="mt-0.5 text-[9.5px] italic text-muted-foreground">{perfilZonaActiva.descripcion}</div>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-50/50 px-3 py-2 text-[10.5px] dark:bg-amber-950/20">
+          <div className="font-bold text-amber-700 dark:text-amber-400">⚠ Perfil agregado RM (EOD SECTRA)</div>
+          <div className="mt-0.5 text-muted-foreground">Selecciona una zona en el panel "Zonas" para ver el perfil específico (oficina/residencial/transit/universitario/mixto)</div>
+        </div>
+      )}
+
       {/* CONTROL DEL FILTRO TEMPORAL — espejo del sidebar del mapa */}
       <Card>
         <CardHeader>

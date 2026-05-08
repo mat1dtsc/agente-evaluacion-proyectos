@@ -6,9 +6,9 @@ import { BitmapLayer, GeoJsonLayer, ScatterplotLayer, IconLayer, PolygonLayer, P
 import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 import { METRO_COLORS } from '@/lib/geo/metroLines';
 import { useProjectStore } from '@/store/projectStore';
-import { useBusRoutes, useCasen, useComunasGeoJSON, useDensidad, useMetro, useMetroLineas } from '@/hooks/useDatasets';
+import { useBusRoutes, useCasen, useComunasGeoJSON, useDensidad, useMetro, useMetroLineas, usePerfilHorarioZonas } from '@/hooks/useDatasets';
 import { useBusStopsNearby, useBusStopsRM, useCafesNearby, useTrafficStreetsNearby, useTrafficStreetsRM, useUrbanEquipmentRM } from '@/hooks/useOSMOverpass';
-import { calcularTodas, scoreUbicacion, veredicto } from '@/lib/finance/cafeModel';
+import { calcularTodas, scoreUbicacion, veredicto, UBICACIONES } from '@/lib/finance/cafeModel';
 import { useSettingsStore } from '@/store/settingsStore';
 import { usePerfilHorario } from '@/hooks/useDatasets';
 import { GeocoderSearch } from './GeocoderSearch';
@@ -102,17 +102,27 @@ export function MapView3D({ containerClassName }: Props) {
   const { data: roadsRM, isLoading: loadingRoads } = useTrafficStreetsRM(layers.vehicular && !location);
   const { data: busStopsRM, isLoading: loadingPeatonal } = useBusStopsRM(layers.peatonal);
   const { data: urbanPois, isLoading: loadingEquipment } = useUrbanEquipmentRM(layers.equipamiento);
-  const { data: perfil } = usePerfilHorario();
+  const { data: perfilRM } = usePerfilHorario();
+  const { data: perfilZonas } = usePerfilHorarioZonas();
   const dayType = useProjectStore((s) => s.dayType);
   const hour = useProjectStore((s) => s.hour);
+  // selectedLocationId: usado tanto por el perfil horario como por los pins de zonas
+  const selectedLocationId = useProjectStore((s) => s.selectedLocationId);
 
   // Intensity multiplier según hora seleccionada (0..1, peak en hora punta)
+  // Si hay zona pre-evaluada seleccionada, usa SU perfil específico (oficina, residencial, etc)
   const hourlyIntensity = useMemo(() => {
-    const series = perfil?.perfilTransportePublico[dayType];
+    const ubic = selectedLocationId
+      ? UBICACIONES.find((u) => u.id === selectedLocationId)
+      : null;
+    const ubicTipo = ubic ? perfilZonas?.tiposZona[ubic.tipoZona] : null;
+    const series = ubicTipo
+      ? ubicTipo.perfilTransportePublico[dayType]
+      : perfilRM?.perfilTransportePublico[dayType];
     if (!series) return 1;
     const max = Math.max(...series, 1);
     return Math.max(0.15, (series[hour] ?? max * 0.5) / max);
-  }, [perfil, dayType, hour]);
+  }, [perfilRM, perfilZonas, selectedLocationId, dayType, hour]);
 
   // Indexed maps for fast lookup
   const dataIndex = useMemo(() => {
@@ -126,7 +136,6 @@ export function MapView3D({ containerClassName }: Props) {
   const setActiveTab = useProjectStore((s) => s.setActiveTab);
   const setHighlightedComuna = useProjectStore((s) => s.setHighlightedComuna);
   const highlightedComuna = useProjectStore((s) => s.highlightedComuna);
-  const selectedLocationId = useProjectStore((s) => s.selectedLocationId);
   const setSelectedLocationId = useProjectStore((s) => s.setSelectedLocationId);
 
   const escenarioActivo = useProjectStore((s) => s.escenarioActivo);

@@ -8,6 +8,7 @@ import {
   type MetroEntry,
   type MetroLineasData,
   type PerfilHorario,
+  type PerfilHorarioZonas,
   type ProcafeData,
   type SourceMeta,
 } from '@/lib/data/loader';
@@ -66,6 +67,15 @@ export function usePerfilHorario() {
   return useQuery({
     queryKey: ['perfil_horario_eod.json'],
     queryFn: () => loadDataset<SourceMeta & PerfilHorario>('perfil_horario_eod.json'),
+    staleTime: Infinity,
+  });
+}
+
+/** Perfiles horarios diferenciados por tipo de zona (oficina/residencial/transit/etc) */
+export function usePerfilHorarioZonas() {
+  return useQuery({
+    queryKey: ['perfil_horario_zonas.json'],
+    queryFn: () => loadDataset<SourceMeta & PerfilHorarioZonas>('perfil_horario_zonas.json'),
     staleTime: Infinity,
   });
 }

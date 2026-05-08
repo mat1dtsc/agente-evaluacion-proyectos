@@ -72,6 +72,19 @@ export interface PerfilHorario {
   perfilVehicular: { lunes_viernes: number[]; sabado: number[]; domingo: number[] };
 }
 
+/** Perfiles diferenciados por tipo de uso de suelo (zonas RM) */
+export interface PerfilHorarioZonas {
+  tiposZona: Record<
+    'oficina' | 'residencial' | 'transit' | 'universitario' | 'mixto',
+    {
+      descripcion: string;
+      peaks: string;
+      perfilTransportePublico: { lunes_viernes: number[]; sabado: number[]; domingo: number[] };
+      perfilVehicular: { lunes_viernes: number[]; sabado: number[]; domingo: number[] };
+    }
+  >;
+}
+
 export interface MetroLine {
   linea: string;
   color: [number, number, number];

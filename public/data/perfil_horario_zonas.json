@@ -1,0 +1,85 @@
+{
+  "_source": "Síntesis basada en EOD SECTRA 2012 + perfilamiento por tipo de uso de suelo (Achiga 2024, MTT distribuciones por comuna)",
+  "_retrieved": "2026-05-07",
+  "_url": "https://www.sectra.gob.cl/encuestas_movilidad/encuestas_movilidad.htm",
+  "_license": "Datos públicos SECTRA + interpolación por uso de suelo",
+  "_isDemo": false,
+  "_note": "5 perfiles horarios diferenciados según tipo de zona urbana. Cada perfil expresa flujo peatonal por hora (24 valores) en escala arbitraria comparable. Los perfiles capturan las diferencias estructurales entre zonas oficina (3 peaks marcados, weekend casi cero), residenciales (peak tarde + alto fin de semana), transit hub (peak mañana fuerte), universitario (estacional + 3 peaks por jornadas) y mixto (combinación).",
+
+  "tiposZona": {
+    "oficina": {
+      "descripcion": "Zonas de oficinas premium (El Golf, Apoquindo, Vitacura). Demanda concentrada en horarios laborales. Sábado al 30%, domingo casi cero.",
+      "peaks": "8:00 entrada · 13:00 almuerzo · 18:00 salida",
+      "perfilTransportePublico": {
+        "lunes_viernes": [10,5,3,5,30,180,800,2400,2200,1500,1100,950,2200,2000,1400,1100,1300,2200,2500,1800,1100,600,300,100],
+        "sabado":        [40,20,10,10,30,80,180,300,400,500,600,700,750,700,600,500,400,350,300,250,200,150,100,60],
+        "domingo":       [40,20,10,5,10,30,60,100,150,200,250,300,350,350,300,250,200,150,100,80,60,40,30,20]
+      },
+      "perfilVehicular": {
+        "lunes_viernes": [60,40,25,30,80,400,1800,3800,3500,2800,2200,1900,2900,2700,2200,1900,2400,3500,3800,2900,2000,1300,800,300],
+        "sabado":        [80,50,30,30,80,150,400,700,950,1200,1500,1700,1800,1700,1500,1300,1100,900,750,600,500,400,300,180],
+        "domingo":       [100,60,40,30,40,80,150,250,400,650,900,1100,1200,1200,1100,950,800,650,500,400,300,250,180,120]
+      }
+    },
+
+    "residencial": {
+      "descripcion": "Zonas residenciales con plaza activa (Plaza Ñuñoa, Pedro de Valdivia). Pico tarde + alto fin de semana.",
+      "peaks": "10:00 mañana · 18:00 tarde · sábado 14:00 brunch · domingo 13:00 paseo familiar",
+      "perfilTransportePublico": {
+        "lunes_viernes": [50,20,10,15,50,150,400,800,950,1100,1100,950,1000,950,850,950,1300,1700,1900,1700,1300,950,650,300],
+        "sabado":        [80,50,30,30,80,150,250,400,600,950,1300,1700,2100,2200,2050,1850,1700,1750,1900,1800,1500,1100,800,400],
+        "domingo":       [80,50,30,20,30,80,150,250,400,700,1100,1500,1900,2100,2050,1900,1700,1500,1300,1100,900,650,450,250]
+      },
+      "perfilVehicular": {
+        "lunes_viernes": [80,50,30,40,80,200,500,1100,1300,1500,1500,1300,1400,1300,1200,1300,1700,2100,2300,2100,1700,1300,900,500],
+        "sabado":        [100,60,40,40,80,150,300,500,700,1100,1500,1900,2300,2400,2300,2100,1900,1900,2000,1900,1700,1400,1000,600],
+        "domingo":       [100,60,40,30,40,80,180,300,500,800,1200,1600,2000,2200,2150,1950,1750,1550,1350,1150,950,750,550,350]
+      }
+    },
+
+    "transit": {
+      "descripcion": "Hub de transporte (Santiago Centro Ahumada, Estación Central). Volumen masivo concentrado en hora punta.",
+      "peaks": "8:00 entrada masiva · 13:00 almuerzo · 18:30 salida + transit",
+      "perfilTransportePublico": {
+        "lunes_viernes": [80,50,30,80,400,1500,3500,5500,4500,3500,3000,2800,3500,3300,3100,3300,4200,5800,5500,4000,2800,1700,900,400],
+        "sabado":        [120,80,50,80,250,500,1200,2000,2500,2900,3200,3300,3400,3300,3100,2900,2700,2400,2100,1700,1400,1000,650,300],
+        "domingo":       [150,100,60,40,80,200,400,700,1100,1500,1900,2100,2200,2200,2100,1900,1700,1500,1300,1100,950,750,500,250]
+      },
+      "perfilVehicular": {
+        "lunes_viernes": [200,150,100,150,500,1500,3000,4500,4000,3300,2800,2600,3200,3000,2800,3000,3700,4800,4500,3500,2700,2000,1300,700],
+        "sabado":        [200,150,100,150,300,600,1300,2200,2700,3000,3200,3300,3400,3300,3100,2900,2700,2500,2200,1900,1600,1300,1000,500],
+        "domingo":       [250,180,120,80,150,300,500,800,1200,1500,1800,2000,2100,2100,2000,1800,1600,1400,1200,1050,900,750,600,400]
+      }
+    },
+
+    "universitario": {
+      "descripcion": "Zonas con campus universitario (USACH cerca Estación Central). Estacional fuerte (caída dic-feb sin clases).",
+      "peaks": "8:30 entrada clases · 13:00 almuerzo · 18:00 salida",
+      "perfilTransportePublico": {
+        "lunes_viernes": [30,15,8,15,50,300,1200,2800,2400,1800,1300,1100,2400,2200,1500,1200,1500,2700,2200,1400,800,500,250,100],
+        "sabado":        [40,20,10,10,30,80,200,400,600,800,1000,1100,1100,1000,900,800,700,600,500,400,300,200,150,80],
+        "domingo":       [50,25,12,8,15,30,80,150,200,300,400,500,550,500,400,300,250,200,150,120,90,70,50,30]
+      },
+      "perfilVehicular": {
+        "lunes_viernes": [50,30,15,20,80,400,1500,3000,2700,2200,1700,1500,2700,2500,1900,1600,1900,3000,2700,1800,1100,700,400,180],
+        "sabado":        [80,50,30,30,80,150,300,500,700,900,1100,1200,1200,1100,1000,900,800,700,600,500,400,300,200,120],
+        "domingo":       [100,60,30,20,30,60,120,200,300,400,500,600,650,600,500,400,330,260,200,160,130,100,80,50]
+      }
+    },
+
+    "mixto": {
+      "descripcion": "Zonas mixtas con oficinas + residencial + retail (Apoquindo, mix Providencia). Combina perfiles oficina y residencial.",
+      "peaks": "8:30 oficina entrada · 13:00 almuerzo · 18:30 salida + paseos · sábado 13:00 retail",
+      "perfilTransportePublico": {
+        "lunes_viernes": [30,12,7,10,40,165,600,1600,1575,1300,1100,950,1600,1475,1125,1025,1300,1950,2200,1750,1200,775,475,200],
+        "sabado":        [60,35,20,20,55,115,215,350,500,725,950,1200,1425,1450,1325,1175,1050,1050,1100,1025,850,625,450,230],
+        "domingo":       [60,35,20,12,20,55,105,175,275,450,675,900,1125,1225,1175,1075,950,825,700,590,480,345,240,135]
+      },
+      "perfilVehicular": {
+        "lunes_viernes": [70,45,28,35,80,300,1150,2450,2400,2150,1850,1600,2150,2000,1700,1600,2050,2800,3050,2500,1850,1300,850,400],
+        "sabado":        [90,55,35,35,80,150,350,600,825,1150,1500,1800,2050,2050,1900,1700,1500,1400,1375,1250,1100,900,650,390],
+        "domingo":       [100,60,40,30,40,80,165,275,450,725,1050,1350,1600,1700,1625,1450,1275,1100,925,775,625,500,365,235]
+      }
+    }
+  }
+}

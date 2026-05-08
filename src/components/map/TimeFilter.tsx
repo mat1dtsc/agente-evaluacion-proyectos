@@ -1,7 +1,8 @@
 import { useProjectStore } from '@/store/projectStore';
-import { usePerfilHorario } from '@/hooks/useDatasets';
+import { usePerfilHorario, usePerfilHorarioZonas } from '@/hooks/useDatasets';
 import { Slider } from '../ui/Slider';
 import { Clock } from 'lucide-react';
+import { UBICACIONES } from '@/lib/finance/cafeModel';
 
 const periodLabel = (h: number): string => {
   if (h < 6) return 'NOCHE';
@@ -23,10 +24,23 @@ export function TimeFilter() {
   const hour = useProjectStore((s) => s.hour);
   const setDayType = useProjectStore((s) => s.setDayType);
   const setHour = useProjectStore((s) => s.setHour);
-  const { data: perfil } = usePerfilHorario();
+  const selectedLocationId = useProjectStore((s) => s.selectedLocationId);
+  const { data: perfilRM } = usePerfilHorario();
+  const { data: perfilZonas } = usePerfilHorarioZonas();
 
-  const series = perfil?.perfilTransportePublico[dayType] ?? [];
+  // Si hay zona pre-evaluada, usar su perfil específico
+  const ubicacion = selectedLocationId
+    ? UBICACIONES.find((u) => u.id === selectedLocationId)
+    : null;
+  const perfilZonaActiva = ubicacion && perfilZonas?.tiposZona[ubicacion.tipoZona];
+
+  const series = perfilZonaActiva
+    ? perfilZonaActiva.perfilTransportePublico[dayType]
+    : (perfilRM?.perfilTransportePublico[dayType] ?? []);
   const max = Math.max(...series, 1);
+  const fuente = perfilZonaActiva
+    ? `Perfil ${ubicacion?.tipoZona}`
+    : 'SECTRA EOD 2012';
 
   return (
     <div className="glass rounded-xl p-3 shadow-xl shadow-black/5">
@@ -35,7 +49,7 @@ export function TimeFilter() {
           <Clock className="h-3.5 w-3.5 text-accent" />
           Filtro temporal
         </span>
-        <span className="font-mono text-[10px] text-muted-foreground">SECTRA EOD 2012</span>
+        <span className={`font-mono text-[10px] ${perfilZonaActiva ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-muted-foreground'}`}>{fuente}</span>
       </div>
 
       {/* Day tabs */}
