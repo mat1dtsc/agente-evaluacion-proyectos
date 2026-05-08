@@ -9,16 +9,20 @@ const VAR_TO_FIELD: Record<SensitivityVariable, (i: ProjectInputs, factor: numbe
   arriendo: (i, f) => ({ ...i, costosFijosMensuales: i.costosFijosMensuales * f }),
   sueldo: (i, f) => ({ ...i, costosFijosMensuales: i.costosFijosMensuales * f }),
   tasaBanco: (i, f) => ({ ...i, tasaBanco: i.tasaBanco * f }),
+  tasaDescuento: (i, f) => ({ ...i, tasaCostoCapital: i.tasaCostoCapital * f }),
 };
 
 /**
  * Para cada combinación variable × delta, recalcula VAN puro e inversionista
  * y reporta el impacto absoluto. Ordena por |impactoVanPuro| descendente
  * para alimentar directamente un tornado chart.
+ *
+ * Nota: la tasa de descuento (tasaDescuento) afecta el VAN tanto vía el factor
+ * de descuento (NPV) como vía el valor terminal (Gordon Growth Tcc-g).
  */
 export function runSensitivity(
   inputs: ProjectInputs,
-  variables: SensitivityVariable[] = ['precio', 'demanda', 'costoInsumo', 'arriendo', 'sueldo', 'tasaBanco'],
+  variables: SensitivityVariable[] = ['precio', 'demanda', 'costoInsumo', 'arriendo', 'sueldo', 'tasaBanco', 'tasaDescuento'],
   deltas: number[] = [-0.20, -0.10, 0.10, 0.20],
 ): SensitivityResult[] {
   const baseVanP = buildPureFlow(inputs).van;

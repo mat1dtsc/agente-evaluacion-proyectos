@@ -112,6 +112,20 @@ export const VIDA_PROMEDIO = Math.round(
 );
 export const DEP_ANUAL = CAPEX / VIDA_PROMEDIO;
 
+// Valor libro al cabo de `ano` años (depreciación SLN activo-por-activo)
+export function valorLibroEnAno(ano) {
+  return INVERSION.reduce((s, item) => {
+    if (ano >= item.vidaUtil) return s;
+    const depAcum = (item.costoCLP / item.vidaUtil) * ano;
+    return s + (item.costoCLP - depAcum);
+  }, 0);
+}
+
+// Valor recupero al vender activos (60% del valor libro — haircut por mercado secundario)
+export function valorRecuperoActivos(ano) {
+  return valorLibroEnAno(ano) * 0.60;
+}
+
 // ============================================================
 // 7 UBICACIONES — PARÁMETROS CALIBRADOS A LA REALIDAD
 // ============================================================
@@ -345,21 +359,25 @@ export function calcularUbicacion(u, escenario = 'base') {
     if (t === HORIZONTE_ANOS) {
       // Recupero capital de trabajo
       flujoNeto += KT;
-      // Valor residual neto activos físicos
-      flujoNeto += CAPEX * 0.10 * (1 - TASA_IMPUESTO);
+      // Valor residual: ahora calculado activo-por-activo (no 10% lineal del CAPEX).
+      // Captura que la habilitación (vida 20) y mobiliario (vida 10) conservan valor
+      // libro al cabo de 5 años. Venta a 60% del valor libro (haircut de mercado).
+      const venta = valorRecuperoActivos(HORIZONTE_ANOS);
+      const valorLibro = valorLibroEnAno(HORIZONTE_ANOS);
+      const gananciaCapital = venta - valorLibro;
+      const impGanancia = gananciaCapital > 0 ? gananciaCapital * TASA_IMPUESTO : 0;
+      const escudoPerdida = gananciaCapital < 0 ? -gananciaCapital * TASA_IMPUESTO : 0;
+      const valorResidualNeto = venta - impGanancia + escudoPerdida;
+      flujoNeto += valorResidualNeto;
       // Valor terminal: múltiplo de EBITDA año 5 (NO Gordon Growth)
-      // Refleja venta del negocio como going concern: 3.5x EBITDA después impuesto
-      const valorTerminalBruto = ebitda * MULT_EBITDA_TERMINAL;
-      // Ganancia de capital sobre valor libro (asumimos valor libro ≈ 0 al cabo de 5 años + recupero)
-      // Tributa: VT × (1 - tasa impuesto)
-      const valorTerminalNeto = valorTerminalBruto * (1 - TASA_IMPUESTO);
+      const valorTerminalNeto = ebitda * MULT_EBITDA_TERMINAL * (1 - TASA_IMPUESTO);
       flujoNeto += valorTerminalNeto;
 
       detalleAnual.push({
         ano: t, combos: combosAno, ingresos, cv: cvTotal, cf: cfTotal,
         comisiones, ebitda, depreciacion: dep, ebit, impuesto: imp,
         utilidadNeta, flujoOper,
-        recuperoKT: KT, valorResidual: CAPEX * 0.10 * (1 - TASA_IMPUESTO),
+        recuperoKT: KT, valorResidual: valorResidualNeto,
         valorTerminal: valorTerminalNeto,
         flujoNeto,
       });

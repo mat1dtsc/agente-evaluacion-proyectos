@@ -73,6 +73,30 @@ export const VIDA_PROMEDIO = Math.round(
 );
 export const DEP_ANUAL = CAPEX / VIDA_PROMEDIO;
 
+/**
+ * Valor libro acumulado al final del año `ano` calculado activo por activo
+ * con depreciación lineal SLN. Captura correctamente que activos de vida
+ * larga (habilitación 20 años) conservan valor libro significativo al cabo
+ * de un horizonte de 5 años — algo que la fórmula "10% del CAPEX" pasaba
+ * por alto.
+ */
+export function valorLibroEnAno(ano: number): number {
+  return INVERSION_ITEMS.reduce((s, item) => {
+    if (ano >= item.vidaUtil) return s; // ya totalmente depreciado
+    const depAcumulada = (item.costoCLP / item.vidaUtil) * ano;
+    return s + (item.costoCLP - depAcumulada);
+  }, 0);
+}
+
+/**
+ * Valor de venta esperado: 60% del valor libro residual (haircut conservador
+ * por liquidez de mercado secundario para activos de cafetería usados).
+ * El 10% × CAPEX previo era erróneo: subestimaba activos con vida >5 años.
+ */
+export function valorRecuperoActivos(ano: number): number {
+  return valorLibroEnAno(ano) * 0.60;
+}
+
 // ============================================================
 // ESCENARIOS DE EVALUACIÓN
 // ============================================================
@@ -420,7 +444,17 @@ export function calcularUbicacion(
     let recuperoKT = 0, valorResidual = 0, valorTerminal = 0;
     if (t === HORIZONTE_ANOS) {
       recuperoKT = KT;
-      valorResidual = CAPEX * 0.10 * (1 - TASA_IMPUESTO);
+      // Valor residual ahora se calcula activo por activo (no 10% lineal del CAPEX).
+      // Captura que la habilitación (vida 20) y mobiliario (vida 10) conservan
+      // valor libro al cabo de 5 años. Venta a 60% del valor libro (haircut por
+      // liquidez secundaria). Ganancia/pérdida tributa al 25%.
+      const venta = valorRecuperoActivos(HORIZONTE_ANOS);
+      const valorLibro = valorLibroEnAno(HORIZONTE_ANOS);
+      const gananciaCapital = venta - valorLibro;
+      const impGanancia = gananciaCapital > 0 ? gananciaCapital * TASA_IMPUESTO : 0;
+      const escudoPerdida = gananciaCapital < 0 ? -gananciaCapital * TASA_IMPUESTO : 0;
+      valorResidual = venta - impGanancia + escudoPerdida;
+
       valorTerminal = ebitda * multTerminal * (1 - TASA_IMPUESTO);
       flujoNeto += recuperoKT + valorResidual + valorTerminal;
     }

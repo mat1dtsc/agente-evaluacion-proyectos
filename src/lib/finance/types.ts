@@ -104,7 +104,8 @@ export type SensitivityVariable =
   | 'costoInsumo'
   | 'arriendo'
   | 'sueldo'
-  | 'tasaBanco';
+  | 'tasaBanco'
+  | 'tasaDescuento';
 
 export interface SensitivityResult {
   variable: SensitivityVariable;

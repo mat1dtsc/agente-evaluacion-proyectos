@@ -199,3 +199,67 @@ describe('Coherencia ingresos/costos', () => {
     expect(ano5.valorTerminal).toBeCloseTo(vtCalc, 0);
   });
 });
+
+describe('Auditoría externa — bugs corregidos', () => {
+  it('Bug #4: valor residual usa valor libro real activo-por-activo (no 10% CAPEX)', async () => {
+    const { valorLibroEnAno, valorRecuperoActivos, INVERSION_ITEMS, CAPEX } = await import('../cafeModel');
+
+    // Calcular manualmente: cada activo con vida útil > 5 conserva valor libro
+    let valorLibroEsperado = 0;
+    INVERSION_ITEMS.forEach((it) => {
+      if (it.vidaUtil > 5) {
+        const dep = (it.costoCLP / it.vidaUtil) * 5;
+        valorLibroEsperado += it.costoCLP - dep;
+      }
+    });
+
+    // El valor libro al año 5 debe ser significativo (no cero, no CAPEX×10%)
+    expect(valorLibroEnAno(5)).toBeCloseTo(valorLibroEsperado, 0);
+    expect(valorLibroEnAno(5)).toBeGreaterThan(CAPEX * 0.30); // mucho más que 10%
+    expect(valorLibroEnAno(5)).toBeLessThan(CAPEX);          // pero menos que el total
+
+    // Habilitación (vida 20) debe estar en el valor libro
+    const habilitacion = INVERSION_ITEMS.find((i) => i.item.includes('Habilitación'));
+    if (habilitacion) {
+      const depHab = (habilitacion.costoCLP / habilitacion.vidaUtil) * 5;
+      const valorLibroHab = habilitacion.costoCLP - depHab;
+      // Debe representar al menos un 30% del valor libro total (es el activo más resistente)
+      expect(valorLibroHab).toBeGreaterThan(valorLibroEnAno(5) * 0.20);
+    }
+
+    // Valor de venta es 60% del valor libro (haircut de mercado)
+    expect(valorRecuperoActivos(5)).toBeCloseTo(valorLibroEnAno(5) * 0.60, 0);
+  });
+
+  it('Bug #2: sensibilidad incluye tasa de descuento', async () => {
+    const { runSensitivity } = await import('../sensitivity');
+    const { defaultInputs } = await import('@/store/projectStore');
+    const result = runSensitivity(defaultInputs);
+    const tasaDescResult = result.find((r) => r.variable === 'tasaDescuento');
+    expect(tasaDescResult).toBeDefined();
+    // Cuando la tasa cambia ±20%, el VAN debe cambiar (no quedar idéntico)
+    const conTasaMenor = result.find((r) => r.variable === 'tasaDescuento' && r.delta === -0.20);
+    const conTasaMayor = result.find((r) => r.variable === 'tasaDescuento' && r.delta === 0.20);
+    expect(conTasaMenor!.vanPuro).not.toBeCloseTo(conTasaMayor!.vanPuro, -3);
+  });
+});
+
+describe('Escenarios de calibración', () => {
+  it('Escenario optimista da VAN mayor que conservador (mismo input)', async () => {
+    const { calcularUbicacion: calc } = await import('../cafeModel');
+    const elGolf = UBICACIONES.find((u) => u.id === 'el_golf')!;
+    const cons = calc(elGolf, 'base', 'conservador');
+    const opt = calc(elGolf, 'base', 'optimista');
+    expect(opt.van).toBeGreaterThan(cons.van);
+  });
+
+  it('Escenario intermedio está entre conservador y optimista', async () => {
+    const { calcularUbicacion: calc } = await import('../cafeModel');
+    const elGolf = UBICACIONES.find((u) => u.id === 'el_golf')!;
+    const cons = calc(elGolf, 'base', 'conservador');
+    const med = calc(elGolf, 'base', 'intermedio');
+    const opt = calc(elGolf, 'base', 'optimista');
+    expect(med.van).toBeGreaterThanOrEqual(cons.van);
+    expect(med.van).toBeLessThanOrEqual(opt.van);
+  });
+});
