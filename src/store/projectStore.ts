@@ -118,7 +118,7 @@ export const useProjectStore = create<ProjectState>()(
         peatonal: true,
         metro: true,
         paraderos: false,
-        competencia: false,
+        competencia: true,   // ON por defecto: visualizar competencia es crítico
         vehicular: false,
         equipamiento: false,
         busRoutes: false,

@@ -277,8 +277,41 @@ export interface ResultadoCompleto {
 // doble grupo puede vender ~25 combos/hora en peak × ~10 hrs operativas = 250
 // Para zonas residenciales (1 turno claro): cap a 220
 // Para zonas transit (alto volumen sostenido): cap a 280
-function calcCombosBase(flujo: number, captura: number, capacidad: number): number {
-  return Math.round(Math.min(flujo * captura, capacidad));
+function calcCombosBase(flujo: number, captura: number, capacidad: number, densidadCompet?: number): number {
+  // Si se entrega densidad de competencia, aplicar penalización (fair share)
+  const penal = densidadCompet ? factorCompetencia(densidadCompet) : 1;
+  return Math.round(Math.min(flujo * captura * penal, capacidad));
+}
+
+/**
+ * Penalización por competencia: cuando hay mucha densidad de cafés/km² en la
+ * zona, la "torta" de demanda se reparte entre más actores. Modelo simple de
+ * "fair share competitivo":
+ *
+ *   factor_competencia = sqrt(densidad_referencia / max(densidad_zona, 30))
+ *
+ * - Densidad referencia = 50 cafés/km² (zona promedio Santiago)
+ * - sqrt() suaviza: zona con 100 cafés/km² penaliza ~30%, zona con 145 → ~41%
+ * - Mínimo: 30 cafés/km² (debajo de eso no penaliza, puede haber demanda no atendida)
+ *
+ * Resultado: la captura efectiva = captura_teórica × factor_competencia.
+ * Esto refleja que abrir el café #146 en Ahumada es muy distinto a abrir el
+ * #50 en Plaza Ñuñoa, aunque ambas tengan tráfico similar.
+ */
+export function factorCompetencia(densidadCafesKm2: number): number {
+  const referencia = 50;
+  // Solo penalizamos zonas con MÁS competencia que la referencia.
+  // Para zonas con menos, no hay "boost" porque la tasa madura ya asume
+  // competencia normal: la captura es la del benchmark.
+  return Math.min(1, Math.sqrt(referencia / Math.max(densidadCafesKm2, 30)));
+}
+
+/**
+ * Tasa de captura EFECTIVA = teórica × penalización por competencia.
+ * Esta es la tasa que realmente debería usarse para proyectar combos.
+ */
+export function tasaCapturaEfectiva(u: { tasaCapturaMadura: number; densidadCompetenciaKm2: number }): number {
+  return u.tasaCapturaMadura * factorCompetencia(u.densidadCompetenciaKm2);
 }
 
 export const UBICACIONES: UbicacionDef[] = [
@@ -297,9 +330,9 @@ export const UBICACIONES: UbicacionDef[] = [
     // Captura premium oficinas — ejecutivos consumen + ticket alto sostenible
     tasaCapturaMadura: 0.0055, capacidadMaxDiaria: 220,
     crecimientoPoblacionalAnual: -0.005, // INE: Las Condes envejece levemente
-    combosDiaBase: calcCombosBase(28_000, 0.0055, 220),         // ≈ 154
-    combosDiaPesimista: calcCombosBase(28_000, 0.0036, 220),    // ≈ 100 (pesim. 65% captura)
-    combosDiaOptimista: calcCombosBase(28_000, 0.0072, 220),    // ≈ 200 (opt. 130% captura)
+    combosDiaBase: calcCombosBase(28_000, 0.0055, 220, 65),       // 65 cafés/km² → ≈ 135
+    combosDiaPesimista: calcCombosBase(28_000, 0.0036, 220, 65),
+    combosDiaOptimista: calcCombosBase(28_000, 0.0072, 220, 65),
     notasZona: 'Oficinas torre AAA. Ejecutivos. Peak 8:30, 13:00, 16:30. Ticket alto pero demanda concentrada lunes-viernes (sábado cae 60%, domingo cero). Captura: 0.55% del flujo (benchmark Procafé zonas laborales premium).',
   },
   {
@@ -317,9 +350,9 @@ export const UBICACIONES: UbicacionDef[] = [
     // Mucha competencia (Starbucks, Juan Valdez) → captura más baja
     tasaCapturaMadura: 0.0045, capacidadMaxDiaria: 220,
     crecimientoPoblacionalAnual: -0.005,
-    combosDiaBase: calcCombosBase(35_000, 0.0045, 220),          // ≈ 158
-    combosDiaPesimista: calcCombosBase(35_000, 0.0029, 220),
-    combosDiaOptimista: calcCombosBase(35_000, 0.0058, 220),
+    combosDiaBase: calcCombosBase(35_000, 0.0045, 220, 78),     // 78 cafés/km² → ≈ 126
+    combosDiaPesimista: calcCombosBase(35_000, 0.0029, 220, 78),
+    combosDiaOptimista: calcCombosBase(35_000, 0.0058, 220, 78),
     notasZona: 'Mix oficinas + retail + residencial alto. Estación Tobalaba 22M pax/año. Alta competencia (Starbucks, Juan Valdez, Café Capital) → captura 0.45% (algo bajo el rango premium por canibalización).',
   },
   {
@@ -337,9 +370,9 @@ export const UBICACIONES: UbicacionDef[] = [
     // Ingreso muy alto, baja competencia — captura premium
     tasaCapturaMadura: 0.0055, capacidadMaxDiaria: 200,
     crecimientoPoblacionalAnual: -0.003,
-    combosDiaBase: calcCombosBase(22_000, 0.0055, 200),          // ≈ 121
-    combosDiaPesimista: calcCombosBase(22_000, 0.0036, 200),
-    combosDiaOptimista: calcCombosBase(22_000, 0.0072, 200),
+    combosDiaBase: calcCombosBase(22_000, 0.0055, 200, 52),      // 52 cafés/km² → ≈ 119
+    combosDiaPesimista: calcCombosBase(22_000, 0.0036, 200, 52),
+    combosDiaOptimista: calcCombosBase(22_000, 0.0072, 200, 52),
     notasZona: 'Mall Parque Arauco aledaño + corporativo. Ticket muy alto (CLP 4.200) e ingreso $4.5M. Captura 0.55% (zona premium con baja competencia). Sin Metro cercano = depende de auto.',
   },
   {
@@ -357,9 +390,9 @@ export const UBICACIONES: UbicacionDef[] = [
     // Mix oficinas + residencial leal, alta competencia
     tasaCapturaMadura: 0.0048, capacidadMaxDiaria: 240,
     crecimientoPoblacionalAnual: 0.015, // INE: Providencia +1.5% anual (boom oficinas)
-    combosDiaBase: calcCombosBase(38_000, 0.0048, 240),          // ≈ 182
-    combosDiaPesimista: calcCombosBase(38_000, 0.0031, 240),
-    combosDiaOptimista: calcCombosBase(38_000, 0.0062, 240),
+    combosDiaBase: calcCombosBase(38_000, 0.0048, 240, 92),     // 92 cafés/km² → ≈ 134
+    combosDiaPesimista: calcCombosBase(38_000, 0.0031, 240, 92),
+    combosDiaOptimista: calcCombosBase(38_000, 0.0062, 240, 92),
     notasZona: 'Mix oficinas + residencial. Estación Pedro de Valdivia 9.5M pax/año. Cliente potencialmente leal por barrio establecido. Crecimiento poblacional INE +1.5% (boom torres oficinas).',
   },
   {
@@ -377,9 +410,9 @@ export const UBICACIONES: UbicacionDef[] = [
     // Plaza con uso 7 días (mejor que zonas oficina), residencial leal
     tasaCapturaMadura: 0.0058, capacidadMaxDiaria: 200,
     crecimientoPoblacionalAnual: 0.013, // INE: Ñuñoa +1.3% anual
-    combosDiaBase: calcCombosBase(24_000, 0.0058, 200),          // ≈ 139
-    combosDiaPesimista: calcCombosBase(24_000, 0.0038, 200),
-    combosDiaOptimista: calcCombosBase(24_000, 0.0075, 200),
+    combosDiaBase: calcCombosBase(24_000, 0.0058, 200, 48),      // 48 cafés/km² → ≈ 139 (sin penal.)
+    combosDiaPesimista: calcCombosBase(24_000, 0.0038, 200, 48),
+    combosDiaOptimista: calcCombosBase(24_000, 0.0075, 200, 48),
     notasZona: 'Plaza Ñuñoa = uso 7 días/sem. Mix universitario (UMCE) + residencial alto. Captura 0.58% (zonas residenciales con plaza activa). Crecimiento INE +1.3% anual.',
   },
   {
@@ -397,9 +430,9 @@ export const UBICACIONES: UbicacionDef[] = [
     // Transit hub: gente apurada, no consume tanto. Pero volumen masivo.
     tasaCapturaMadura: 0.0022, capacidadMaxDiaria: 280,
     crecimientoPoblacionalAnual: 0.025, // INE: Santiago +2.5% (boom edificación residencial)
-    combosDiaBase: calcCombosBase(95_000, 0.0022, 280),          // 209 (capeado por capacidad)
-    combosDiaPesimista: calcCombosBase(95_000, 0.0014, 280),
-    combosDiaOptimista: calcCombosBase(95_000, 0.0029, 280),
+    combosDiaBase: calcCombosBase(95_000, 0.0022, 280, 145),    // 145 cafés/km² → ≈ 123 (-41% vs sin compet.)
+    combosDiaPesimista: calcCombosBase(95_000, 0.0014, 280, 145),
+    combosDiaOptimista: calcCombosBase(95_000, 0.0029, 280, 145),
     notasZona: 'Máximo flujo peatonal RM (95k pax/día). Mix laboral + turismo + transit. Ticket bajo, alta competencia. Captura sólo 0.22% (transit hub: gente apurada). Volumen alto compensa. Crecimiento INE +2.5%.',
   },
   {
@@ -417,9 +450,9 @@ export const UBICACIONES: UbicacionDef[] = [
     // USACH + transit. Estudiantes consumen pero ticket bajo. Estacional.
     tasaCapturaMadura: 0.0035, capacidadMaxDiaria: 240,
     crecimientoPoblacionalAnual: 0.030, // INE: Estación Central +3.0% (renovación urbana)
-    combosDiaBase: calcCombosBase(42_000, 0.0035, 240),          // ≈ 147
-    combosDiaPesimista: calcCombosBase(42_000, 0.0023, 240),
-    combosDiaOptimista: calcCombosBase(42_000, 0.0046, 240),
+    combosDiaBase: calcCombosBase(42_000, 0.0035, 240, 32),     // 32 cafés/km² → ≈ 147 (sin penal., baja densidad)
+    combosDiaPesimista: calcCombosBase(42_000, 0.0023, 240, 32),
+    combosDiaOptimista: calcCombosBase(42_000, 0.0046, 240, 32),
     notasZona: 'USACH + Estación Central intermodal 19.5M pax/año. Ticket bajo, alta rotación. Captura 0.35% (mix transit + universitario). Estacional fuerte (caída dic-feb sin clases). Crecimiento INE +3% (boom renovación urbana).',
   },
 ];

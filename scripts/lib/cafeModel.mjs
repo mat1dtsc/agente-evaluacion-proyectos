@@ -131,8 +131,15 @@ export function valorRecuperoActivos(ano) {
 // ============================================================
 export const FACTOR_RAMPUP = { 1: 0.55, 2: 0.75, 3: 0.90, 4: 1.00, 5: 1.00 };
 
-function calcCombosBase(flujo, captura, capacidad) {
-  return Math.round(Math.min(flujo * captura, capacidad));
+// Penalización por densidad de competencia (fair share competitivo)
+// factor = sqrt(50 / max(densidad, 30)) — referencia 50 cafés/km² zona promedio
+export function factorCompetencia(densidadCafesKm2) {
+  return Math.min(1, Math.sqrt(50 / Math.max(densidadCafesKm2, 30)));
+}
+
+function calcCombosBase(flujo, captura, capacidad, densidadCompet) {
+  const penal = densidadCompet ? factorCompetencia(densidadCompet) : 1;
+  return Math.round(Math.min(flujo * captura * penal, capacidad));
 }
 
 // ============================================================
@@ -165,9 +172,9 @@ export const UBICACIONES = [
     costoVariableUnitario: 1_700,
     tasaCapturaMadura: 0.0055, capacidadMaxDiaria: 220,
     crecimientoPoblacionalAnual: -0.005,
-    combosDiaBase: calcCombosBase(28_000, 0.0055, 220),
-    combosDiaPesimista: calcCombosBase(28_000, 0.0036, 220),
-    combosDiaOptimista: calcCombosBase(28_000, 0.0072, 220),
+    combosDiaBase: calcCombosBase(28_000, 0.0055, 220, 65),
+    combosDiaPesimista: calcCombosBase(28_000, 0.0036, 220, 65),
+    combosDiaOptimista: calcCombosBase(28_000, 0.0072, 220, 65),
     notasZona: 'Oficinas torre AAA. Ejecutivos. Peak 8:30, 13:00, 16:30. Ticket alto pero demanda concentrada lunes-viernes (sábado cae 60%, domingo cero). Riesgo: dependencia 100% de oficinas.',
   },
   {
@@ -189,9 +196,9 @@ export const UBICACIONES = [
     costoVariableUnitario: 1_550,
     tasaCapturaMadura: 0.0045, capacidadMaxDiaria: 220,
     crecimientoPoblacionalAnual: -0.005,
-    combosDiaBase: calcCombosBase(35_000, 0.0045, 220),
-    combosDiaPesimista: calcCombosBase(35_000, 0.0029, 220),
-    combosDiaOptimista: calcCombosBase(35_000, 0.0058, 220),
+    combosDiaBase: calcCombosBase(35_000, 0.0045, 220, 78),
+    combosDiaPesimista: calcCombosBase(35_000, 0.0029, 220, 78),
+    combosDiaOptimista: calcCombosBase(35_000, 0.0058, 220, 78),
     notasZona: 'Mix oficinas + retail + residencial alto. Estación Tobalaba 22M pax/año. Alta competencia (Starbucks, Juan Valdez, Café Capital). Margen presionado.',
   },
   {
@@ -213,9 +220,9 @@ export const UBICACIONES = [
     costoVariableUnitario: 1_650,
     tasaCapturaMadura: 0.0055, capacidadMaxDiaria: 200,
     crecimientoPoblacionalAnual: -0.003,
-    combosDiaBase: calcCombosBase(22_000, 0.0055, 200),
-    combosDiaPesimista: calcCombosBase(22_000, 0.0036, 200),
-    combosDiaOptimista: calcCombosBase(22_000, 0.0072, 200),
+    combosDiaBase: calcCombosBase(22_000, 0.0055, 200, 52),
+    combosDiaPesimista: calcCombosBase(22_000, 0.0036, 200, 52),
+    combosDiaOptimista: calcCombosBase(22_000, 0.0072, 200, 52),
     notasZona: 'Mall Parque Arauco aledaño + corporativo. Ticket muy alto. Dependencia de Mall (estacional). Sin Metro cercano = depende de auto.',
   },
   {
@@ -237,9 +244,9 @@ export const UBICACIONES = [
     costoVariableUnitario: 1_500,
     tasaCapturaMadura: 0.0048, capacidadMaxDiaria: 240,
     crecimientoPoblacionalAnual: 0.015,
-    combosDiaBase: calcCombosBase(38_000, 0.0048, 240),
-    combosDiaPesimista: calcCombosBase(38_000, 0.0031, 240),
-    combosDiaOptimista: calcCombosBase(38_000, 0.0062, 240),
+    combosDiaBase: calcCombosBase(38_000, 0.0048, 240, 92),
+    combosDiaPesimista: calcCombosBase(38_000, 0.0031, 240, 92),
+    combosDiaOptimista: calcCombosBase(38_000, 0.0062, 240, 92),
     notasZona: 'Mix oficinas + residencial. Estación Pedro de Valdivia 9.5M pax/año. Mayor competencia RM (riesgo). Cliente potencialmente leal por barrio establecido.',
   },
   {
@@ -261,9 +268,9 @@ export const UBICACIONES = [
     costoVariableUnitario: 1_400,
     tasaCapturaMadura: 0.0058, capacidadMaxDiaria: 200,
     crecimientoPoblacionalAnual: 0.013,
-    combosDiaBase: calcCombosBase(24_000, 0.0058, 200),
-    combosDiaPesimista: calcCombosBase(24_000, 0.0038, 200),
-    combosDiaOptimista: calcCombosBase(24_000, 0.0075, 200),
+    combosDiaBase: calcCombosBase(24_000, 0.0058, 200, 48),
+    combosDiaPesimista: calcCombosBase(24_000, 0.0038, 200, 48),
+    combosDiaOptimista: calcCombosBase(24_000, 0.0075, 200, 48),
     notasZona: 'Mix universitario (UMCE, Católica San Joaquín cercana) + residencial alto. Plaza activa fines de semana. Crecimiento demanda 4% anual proyectado.',
   },
   {
@@ -285,9 +292,9 @@ export const UBICACIONES = [
     costoVariableUnitario: 1_350,
     tasaCapturaMadura: 0.0022, capacidadMaxDiaria: 280,
     crecimientoPoblacionalAnual: 0.025,
-    combosDiaBase: calcCombosBase(95_000, 0.0022, 280),
-    combosDiaPesimista: calcCombosBase(95_000, 0.0014, 280),
-    combosDiaOptimista: calcCombosBase(95_000, 0.0029, 280),
+    combosDiaBase: calcCombosBase(95_000, 0.0022, 280, 145),
+    combosDiaPesimista: calcCombosBase(95_000, 0.0014, 280, 145),
+    combosDiaOptimista: calcCombosBase(95_000, 0.0029, 280, 145),
     notasZona: 'Máximo flujo peatonal RM (95k pax/día). Mix laboral + turismo + transit. Ticket bajo. Alta competencia (145 cafés/km²). Volumen alto compensa pero margen presionado.',
   },
   {
@@ -309,9 +316,9 @@ export const UBICACIONES = [
     costoVariableUnitario: 1_300,
     tasaCapturaMadura: 0.0035, capacidadMaxDiaria: 240,
     crecimientoPoblacionalAnual: 0.030,
-    combosDiaBase: calcCombosBase(42_000, 0.0035, 240),
-    combosDiaPesimista: calcCombosBase(42_000, 0.0023, 240),
-    combosDiaOptimista: calcCombosBase(42_000, 0.0046, 240),
+    combosDiaBase: calcCombosBase(42_000, 0.0035, 240, 32),
+    combosDiaPesimista: calcCombosBase(42_000, 0.0023, 240, 32),
+    combosDiaOptimista: calcCombosBase(42_000, 0.0046, 240, 32),
     notasZona: 'USACH + Estación Central intermodal 19.5M pax/año. Ticket bajo, alta rotación. Estacional fuerte (caída en período sin clases dic-feb).',
   },
 ];

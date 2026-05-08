@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown, AlertTriangle, MapPin, Coffee, Crown, Trophy, Shield, Scale, Sparkles } from 'lucide-react';
 import {
-  calcularTodas, scoreUbicacion, veredicto, ESCENARIOS,
+  calcularTodas, scoreUbicacion, veredicto, ESCENARIOS, factorCompetencia,
   type ResultadoCompleto, type Escenario,
 } from '@/lib/finance/cafeModel';
 import { useProjectStore } from '@/store/projectStore';
@@ -132,10 +132,14 @@ export function ZonasPanel() {
           📊 Cómo se calcula la demanda (clic para detalles)
         </summary>
         <div className="mt-2 space-y-1.5 text-muted-foreground">
-          <div><strong className="text-foreground">Combos/día madura</strong> = Flujo peatonal OSM × tasa captura zona (cap a capacidad física 200-280)</div>
+          <div><strong className="text-foreground">Combos/día madura</strong> = Flujo peatonal OSM × tasa captura × <span className="text-rose-600 dark:text-rose-400">factor competencia</span> (cap a 200-280)</div>
           <div><strong className="text-foreground">Captura típica (Procafé 2024):</strong> oficinas premium 0.45-0.65% · transit hub 0.18-0.30% · residencial/plaza 0.45-0.60%</div>
+          <div className="rounded-md bg-rose-100/60 px-2 py-1 dark:bg-rose-950/20">
+            <strong className="text-rose-700 dark:text-rose-300">Penalización por competencia:</strong> factor = √(50 / densidad_cafés_km²). Refleja que si hay 100 cafés en 1 km², el mismo flujo se reparte entre más actores. Una zona con densidad 145 (Santiago Centro) penaliza ~41% la captura.
+          </div>
           <div><strong className="text-foreground">Ramp-up (Achiga 2024):</strong> año 1 = 55% · año 2 = 75% · año 3 = 90% · años 4-5 = 100%</div>
           <div><strong className="text-foreground">Crecimiento por zona:</strong> g_INE_proyección_2024 + 1.5% sectorial Procafé (con piso del escenario)</div>
+          <div className="text-blue-700 dark:text-blue-400">💡 La capa <strong>"Cafés competencia"</strong> ya está activa en el mapa: vas a ver los cafés OSM en vivo cuando selecciones una zona.</div>
         </div>
       </details>
 
@@ -280,9 +284,9 @@ function ZoneCard({ r, rank, selected, onSelect }: ZoneCardProps) {
           </div>
 
           {/* NUEVO: transparencia del modelo de demanda */}
-          <div className="mt-1.5 grid grid-cols-3 gap-2 rounded-md border border-blue-500/20 bg-blue-50/40 px-2 py-1.5 text-[9px] dark:bg-blue-950/15">
+          <div className="mt-1.5 grid grid-cols-2 gap-2 rounded-md border border-blue-500/20 bg-blue-50/40 px-2 py-1.5 text-[9px] dark:bg-blue-950/15">
             <Detail
-              label="Captura"
+              label="Captura teórica"
               value={formatPct(r.u.tasaCapturaMadura, 2)}
             />
             <Detail
@@ -290,10 +294,21 @@ function ZoneCard({ r, rank, selected, onSelect }: ZoneCardProps) {
               value={`${Math.round(r.base.combosDia * 0.55)} → ${r.base.combosDia}`}
             />
             <Detail
-              label="g INE"
+              label="g INE poblac."
               value={formatPct(r.u.crecimientoPoblacionalAnual, 1)}
             />
+            <Detail
+              label={`Compet. ${r.u.densidadCompetenciaKm2}/km²`}
+              value={`× ${factorCompetencia(r.u.densidadCompetenciaKm2).toFixed(2)}`}
+            />
           </div>
+
+          {/* Penalización por competencia (solo si es significativa) */}
+          {r.u.densidadCompetenciaKm2 > 60 && (
+            <div className="mt-1 rounded-md bg-rose-50 px-2 py-1 text-[9px] text-rose-700 dark:bg-rose-950/20 dark:text-rose-300">
+              ⚠ Densidad competencia alta: la captura efectiva baja {Math.round((1 - factorCompetencia(r.u.densidadCompetenciaKm2)) * 100)}% por reparto del mercado.
+            </div>
+          )}
 
           {/* Pesimista (resiliencia) */}
           <div className="mt-1.5 flex items-center justify-between rounded-md bg-muted/40 px-2 py-1">

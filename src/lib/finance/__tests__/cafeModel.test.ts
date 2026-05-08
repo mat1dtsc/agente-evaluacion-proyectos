@@ -38,9 +38,9 @@ describe('calcularUbicacion — El Golf (zona ganadora)', () => {
   const elGolf = UBICACIONES.find((u) => u.id === 'el_golf')!;
   const r = calcularUbicacion(elGolf, 'base');
 
-  it('VAN base es positivo y razonable ($120-200M con ramp-up + captura realista)', () => {
-    expect(r.van).toBeGreaterThan(120_000_000);
-    expect(r.van).toBeLessThan(200_000_000);
+  it('VAN base es positivo y razonable ($80-160M con ramp-up + captura + competencia)', () => {
+    expect(r.van).toBeGreaterThan(80_000_000);
+    expect(r.van).toBeLessThan(160_000_000);
   });
 
   it('TIR base supera Tcc (proyecto rentable)', () => {
@@ -62,13 +62,15 @@ describe('calcularUbicacion — El Golf (zona ganadora)', () => {
     expect(r.inversionTotal).toBeLessThan(60_000_000);
   });
 
-  it('EBITDA año 1 es positivo (con ramp-up 55%, ~$5-15M)', () => {
-    expect(r.ebitdaAno1).toBeGreaterThan(5_000_000);
+  it('EBITDA año 1 puede ser negativo por ramp-up bajo (operación naciente)', () => {
+    // Con ramp 55% × competencia el primer año el EBITDA puede ser ligeramente
+    // negativo — es esperable y consistente con la realidad operativa
+    expect(r.ebitdaAno1).toBeGreaterThan(-10_000_000);
     expect(r.ebitdaAno1).toBeLessThan(20_000_000);
   });
 
-  it('EBITDA año 4 (madurez) es ~$50-80M', () => {
-    expect(r.detalleAnual[4].ebitda).toBeGreaterThan(40_000_000);
+  it('EBITDA año 4 (madurez) es ~$30-80M', () => {
+    expect(r.detalleAnual[4].ebitda).toBeGreaterThan(30_000_000);
     expect(r.detalleAnual[4].ebitda).toBeLessThan(90_000_000);
   });
 
@@ -296,12 +298,24 @@ describe('Modelo de demanda: tasa de captura + ramp-up + crecimiento INE', () =>
     });
   });
 
-  it('Combos día base = flujo × captura (con cap a capacidadMaxDiaria)', () => {
+  it('Combos día base = flujo × captura × factorCompetencia (con cap)', async () => {
+    const { factorCompetencia } = await import('../cafeModel');
     UBICACIONES.forEach((u) => {
-      const sinCap = u.flujoPeatonalDia * u.tasaCapturaMadura;
+      const factor = factorCompetencia(u.densidadCompetenciaKm2);
+      const sinCap = u.flujoPeatonalDia * u.tasaCapturaMadura * factor;
       const conCap = Math.min(sinCap, u.capacidadMaxDiaria);
       expect(u.combosDiaBase).toBeCloseTo(conCap, -1);
     });
+  });
+
+  it('Penalización por competencia es máxima 1.0 (no hay boost en zonas con poca competencia)', async () => {
+    const { factorCompetencia } = await import('../cafeModel');
+    // Zonas con baja competencia: factor = 1.0 (no boost)
+    expect(factorCompetencia(20)).toBe(1.0);
+    expect(factorCompetencia(50)).toBe(1.0);
+    // Zonas con alta competencia: factor < 1.0 (penalización)
+    expect(factorCompetencia(100)).toBeLessThan(1.0);
+    expect(factorCompetencia(145)).toBeCloseTo(0.587, 2);
   });
 
   it('Combos año 1 son ~55% de los maduros (ramp-up inicial)', async () => {
