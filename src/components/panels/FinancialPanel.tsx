@@ -99,30 +99,36 @@ export function FinancialPanel() {
         <AnimatedKPI
           label="TIR puro"
           value={Number.isFinite(fp.tir) ? fp.tir * 100 : 0}
-          suffix="%"
+          suffix={Number.isFinite(fp.tir) ? '%' : ''}
           decimals={1}
-          positive={fp.tir > inputs.tasaCostoCapital}
-          subtitle={`vs Tcc ${(inputs.tasaCostoCapital * 100).toFixed(0)}%`}
+          positive={Number.isFinite(fp.tir) && fp.tir > inputs.tasaCostoCapital}
+          subtitle={Number.isFinite(fp.tir)
+            ? `vs Tcc ${(inputs.tasaCostoCapital * 100).toFixed(0)}%`
+            : 'no rentable'}
           icon={<TrendingUp className="h-4 w-4" />}
           delay={0.1}
         />
         <AnimatedKPI
           label="TIR inversionista"
           value={Number.isFinite(fi.tir) ? fi.tir * 100 : 0}
-          suffix="%"
+          suffix={Number.isFinite(fi.tir) ? '%' : ''}
           decimals={1}
-          positive={fi.tir > inputs.tasaCostoCapital}
-          subtitle="Retorno propio"
+          positive={Number.isFinite(fi.tir) && fi.tir > inputs.tasaCostoCapital}
+          subtitle={Number.isFinite(fi.tir) ? 'Retorno propio' : 'no rentable'}
           icon={<Activity className="h-4 w-4" />}
           delay={0.15}
         />
         <AnimatedKPI
           label="Payback"
-          value={fp.payback === Infinity ? 0 : fp.payback}
-          suffix={fp.payback === Infinity ? '' : ' años'}
+          value={Number.isFinite(fp.payback) && fp.payback > 0 ? fp.payback : 0}
+          suffix={Number.isFinite(fp.payback) && fp.payback > 0 ? ' años' : ''}
           decimals={2}
-          positive={fp.payback < inputs.vidaUtilAnos}
-          subtitle={fp.payback === Infinity ? '> horizonte' : 'Recuperación'}
+          positive={Number.isFinite(fp.payback) && fp.payback < inputs.vidaUtilAnos}
+          subtitle={!Number.isFinite(fp.payback) || fp.payback < 0
+            ? 'no repaga en 5y'
+            : fp.payback >= inputs.vidaUtilAnos
+            ? '> horizonte'
+            : 'Recuperación'}
           icon={<Calendar className="h-4 w-4" />}
           delay={0.2}
         />
@@ -206,16 +212,47 @@ export function FinancialPanel() {
       <Card>
         <CardHeader>
           <CardTitle>Exportar informe</CardTitle>
+          <CardDescription>
+            {model.usandoModeloCorregido
+              ? 'Descarga los entregables auditados (modelo corregido para retail food chileno)'
+              : 'Genera Excel/Word desde los inputs editables actuales'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
-          <Button onClick={() => exportExcel({ inputs, model, projectName, location })}>
-            <FileSpreadsheet className="h-4 w-4" />
-            Exportar Excel (con fórmulas vivas)
-          </Button>
-          <Button variant="outline" onClick={() => exportWord({ inputs, model, projectName, location })}>
-            <Download className="h-4 w-4" />
-            Exportar Word (informe)
-          </Button>
+          {model.usandoModeloCorregido ? (
+            <>
+              <a
+                href="/exports/Analisis_Cafe_Combo_RM.xlsx"
+                download
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 text-xs font-semibold text-emerald-700 transition-all hover:bg-emerald-500/20 dark:text-emerald-400"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Análisis comparativo Excel (7 zonas, modelo auditado)
+              </a>
+              <a
+                href="/exports/Informe_Cafe_Combo_RM.docx"
+                download
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 text-xs font-semibold text-blue-700 transition-all hover:bg-blue-500/20 dark:text-blue-400"
+              >
+                <Download className="h-4 w-4" />
+                Informe académico Word (16 capítulos)
+              </a>
+              <div className="text-[10px] text-muted-foreground">
+                Estos archivos contienen las 7 zonas evaluadas + capítulo de auditoría del modelo. Para exportar un Excel personalizado con tus propios inputs editables, deselecciona la zona en el panel "Zonas".
+              </div>
+            </>
+          ) : (
+            <>
+              <Button onClick={() => exportExcel({ inputs, model, projectName, location })}>
+                <FileSpreadsheet className="h-4 w-4" />
+                Exportar Excel (con fórmulas vivas)
+              </Button>
+              <Button variant="outline" onClick={() => exportWord({ inputs, model, projectName, location })}>
+                <Download className="h-4 w-4" />
+                Exportar Word (informe)
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -70,12 +70,20 @@ export function useFinancialModel(): FinancialModelOutput {
       // Construimos un FinancialResult equivalente desde el detalle anual
       const cashFlow = detalleAcashFlow(base.detalleAnual, CAPEX, base.capitalTrabajo);
 
-      // Break-even: aproximamos como combos/día que iguala el EBITDA año 1 a costos fijos
-      // (no exacto pero suficiente para visualización; el Excel tiene el cálculo formal)
-      const ebitdaPorCombo = (ubic.ticketPromedio - ubic.costoVariableUnitario)
-        * (1 - 0.028); // restamos comisión 2.8%
-      const cfDiarios = base.costosFijosTotal * 12 / 312;
-      const breakevenCombos = Math.round(cfDiarios / Math.max(ebitdaPorCombo, 1));
+      // Break-even REAL: búsqueda binaria sobre combos/día que hace VAN = 0
+      // (en lugar de la aproximación basada en margen por combo)
+      const breakevenCombos = (() => {
+        let lo = 1, hi = ubic.combosDiaBase * 3;
+        // Si en hi el VAN sigue negativo, no hay break-even alcanzable
+        if (calcularUbicacion({ ...ubic, combosDiaBase: hi }, 'base').van < 0) return Infinity;
+        for (let i = 0; i < 40; i += 1) {
+          const mid = (lo + hi) / 2;
+          const v = calcularUbicacion({ ...ubic, combosDiaBase: mid }, 'base').van;
+          if (Math.abs(v) < 100_000) return Math.round(mid);
+          if (v > 0) hi = mid; else lo = mid;
+        }
+        return Math.round((lo + hi) / 2);
+      })();
 
       // Sensibilidad cualitativa: usamos el modelo viejo sobre los inputs sincronizados
       // (es solo para el panel sensibilidad — el VAN base ya viene del cafeModel)
@@ -163,21 +171,36 @@ function construirInversionistaDesdeBase(
     saldo -= amortAno;
   }
 
+  // Construye el cashflow del inversionista con crédito fiscal acumulado
+  // (Caso 1 nueva empresa) — coherente con el modelo puro del cafeModel
+  let creditoFiscal = 0;
   const cashFlow: CashFlowYear[] = base.detalleAnual.map((d) => {
     const tablaAno = d.ano > 0 && d.ano <= n ? tabla[d.ano - 1] : null;
     const intereses = tablaAno?.intereses ?? 0;
     const amortizacion = tablaAno?.amortizacion ?? 0;
-    const ebit = d.ebit;
-    const uai = ebit - intereses;
-    const imp = uai > 0 ? uai * TASA_IMPUESTO : 0;
+    const uai = d.ebit - intereses;
+
+    let imp = 0;
+    if (uai < 0) {
+      // Pérdida → acumula crédito fiscal para años futuros
+      creditoFiscal += -uai * TASA_IMPUESTO;
+    } else if (uai > 0) {
+      const teorico = uai * TASA_IMPUESTO;
+      if (creditoFiscal >= teorico) { creditoFiscal -= teorico; imp = 0; }
+      else { imp = teorico - creditoFiscal; creditoFiscal = 0; }
+    }
     const udi = uai - imp;
     const flujoOper = udi + d.depreciacion;
 
-    let flujoNeto = flujoOper - amortizacion;
+    let flujoNeto: number;
     if (d.ano === 0) {
+      // Año 0: salida = inversión total, entrada = préstamo
       flujoNeto = -inversionTotal + monto;
-    } else if (d.ano === base.detalleAnual.length - 1) {
-      flujoNeto += (d.recuperoKT ?? 0) + (d.valorResidual ?? 0) + (d.valorTerminal ?? 0);
+    } else {
+      flujoNeto = flujoOper - amortizacion;
+      if (d.ano === base.detalleAnual.length - 1) {
+        flujoNeto += (d.recuperoKT ?? 0) + (d.valorResidual ?? 0) + (d.valorTerminal ?? 0);
+      }
     }
 
     return {
@@ -205,20 +228,34 @@ function construirInversionistaDesdeBase(
   const flujos = cashFlow.map((c) => c.flujoCajaNeto);
   const van = flujos.reduce((s, f, idx) => s + f / Math.pow(1 + TCC, idx), 0);
 
-  // TIR
-  let r = 0.20;
-  for (let it = 0; it < 200; it += 1) {
-    let f = 0, df = 0;
-    for (let t = 0; t < flujos.length; t += 1) {
-      f += flujos[t] / Math.pow(1 + r, t);
-      if (t > 0) df -= (t * flujos[t]) / Math.pow(1 + r, t + 1);
+  // TIR robusta (mismas protecciones que cafeModel.calcularTIR):
+  //   - Si suma de flujos es negativa, no existe TIR real positiva
+  //   - Si no hay cambio de signo, no existe TIR
+  //   - Si Newton-Raphson no converge en 200 iter, devolver NaN
+  const tir = (() => {
+    const sum = flujos.reduce((s, v) => s + v, 0);
+    if (sum < 0) return NaN;
+    let cambios = 0;
+    for (let i = 1; i < flujos.length; i += 1) {
+      if (Math.sign(flujos[i]) !== Math.sign(flujos[i - 1]) && flujos[i] !== 0) cambios += 1;
     }
-    if (Math.abs(f) < 1) break;
-    if (df === 0) { r = NaN; break; }
-    const nr = r - f / df;
-    if (!Number.isFinite(nr) || nr <= -0.99 || nr > 10) { r = NaN; break; }
-    r = nr;
-  }
+    if (cambios === 0) return NaN;
+
+    let r = 0.20;
+    for (let it = 0; it < 200; it += 1) {
+      let f = 0, df = 0;
+      for (let t = 0; t < flujos.length; t += 1) {
+        f += flujos[t] / Math.pow(1 + r, t);
+        if (t > 0) df -= (t * flujos[t]) / Math.pow(1 + r, t + 1);
+      }
+      if (Math.abs(f) < 1) return r;
+      if (df === 0) return NaN;
+      const nr = r - f / df;
+      if (!Number.isFinite(nr) || nr <= -0.99 || nr > 10) return NaN;
+      r = nr;
+    }
+    return NaN;
+  })();
 
   let acc = 0; let payback = Infinity;
   for (let t = 0; t < flujos.length; t += 1) {
@@ -230,7 +267,7 @@ function construirInversionistaDesdeBase(
   return {
     cashFlow,
     van: Math.round(van),
-    tir: r,
+    tir,
     payback,
     breakeven: 0,
   };

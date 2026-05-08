@@ -73,24 +73,25 @@ import { costoInicialNormativo, costoAnualNormativo } from '@/lib/finance/normat
 const planillaMensualDefault = planillaAnual(PLANILLA_CAFE_DEFAULT) / 12;
 
 export const defaultInputs: ProjectInputs = {
-  inversionInicial: 30_000_000,
-  capitalTrabajo: 4_000_000,
+  inversionInicial: 20_500_000,    // CAPEX activos (sin KT) — coherente con cafeModel
+  capitalTrabajo: 11_000_000,      // ~2.5 meses egresos típicos
   vidaUtilAnos: 5,
-  combosPorDiaBase: 80,
-  diasOperacionAno: 360,
-  crecimientoDemanda: 0.05,
-  ticketPromedio: 3500,
-  costoVariableUnitario: 900,
-  costosFijosMensuales: planillaMensualDefault + 1_400_000, // arriendo + servicios + insumos no var
-  costosFijosNoLaboralesMensuales: 1_400_000,
+  combosPorDiaBase: 90,
+  diasOperacionAno: 312,           // 6 días/sem × 52, coherente con cafeModel
+  crecimientoDemanda: 0.025,       // sectorial sin reinversión
+  ticketPromedio: 3800,
+  costoVariableUnitario: 1500,     // combo café + envasado realista (margen ~60%)
+  // Costos fijos = arriendo zona típica $1.3M + gastos+contrib $250k + servicios+marketing+aseo+software+seguros $850k
+  costosFijosMensuales: planillaMensualDefault + 2_400_000,
+  costosFijosNoLaboralesMensuales: 2_400_000,
   tasaImpuesto: 0.25, // Pro PYME default
   tasaCostoCapital: 0.14, // Retail food riesgo MEDIO real (CAPM corregido)
   porcentajeDeuda: 0.4,
   tasaBanco: 0.10,
   plazoDeudaAnos: 5,
   depreciacionAnos: 5,
-  valorResidual: 0,
-  crecimientoPerpetuidad: 0.025,
+  valorResidual: 2_050_000,        // 10% del CAPEX, neto de impuesto en último año
+  crecimientoPerpetuidad: 0.02,    // Gordon Growth conservador (modelo libre)
   personal: PLANILLA_CAFE_DEFAULT,
   costosNormativosIniciales: costoInicialNormativo(),
   costosNormativosAnuales: costoAnualNormativo(),

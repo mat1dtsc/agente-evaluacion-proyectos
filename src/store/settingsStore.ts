@@ -23,8 +23,8 @@ export const useSettingsStore = create<SettingsState>()(
         set({ theme });
         applyTheme(theme);
       },
-      defaultImpuesto: 0.27,
-      defaultTcc: 0.12,
+      defaultImpuesto: 0.25, // Pro PYME 14 D N°3
+      defaultTcc: 0.14,      // Retail food riesgo MEDIO (CAPM)
       setDefaults: (p) => set(p),
     }),
     {

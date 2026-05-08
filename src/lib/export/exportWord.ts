@@ -443,7 +443,7 @@ export async function exportWord({ inputs, model, projectName, location }: Args)
     p('• TIR: Tasa Interna de Retorno. Tasa que hace VAN = 0. Acepta si > Tcc.'),
     p('• Payback: período en que la suma acumulada de flujos pasa de negativa a positiva.'),
     p('• Break-even: demanda mínima para que VAN = 0.'),
-    p('• Tcc: tasa de costo de capital del proyecto. Default 12% (curso EVP UAH).'),
+    p('• Tcc: tasa de costo de capital del proyecto. Para retail food en Chile: 14% (CAPM con β 1.3, ERP 6.5%).'),
     p('• UAI: Utilidad Antes de Impuesto.'),
     p('• UDI: Utilidad Después de Impuesto.'),
     p('• KT: Capital de Trabajo.'),

@@ -26,10 +26,14 @@ export function AssumptionsPanel() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Supuestos del modelo</CardTitle>
+        <CardTitle>Supuestos del modelo (modelo libre)</CardTitle>
         <CardDescription>Edita en línea, el modelo recompone VAN/TIR al instante.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
+        <div className="rounded-md border border-amber-500/30 bg-amber-50/50 p-2 text-[10.5px] dark:bg-amber-950/15">
+          <span className="font-semibold text-amber-700 dark:text-amber-400">⚠ Diferencias vs modelo auditado:</span>
+          <span className="text-muted-foreground"> el modo libre usa valor terminal por Gordon Growth (perpetuidad creciente) y NO incluye comisión de tarjetas. Para evaluar zonas reales con todos los ajustes (comisión 2,8%, valor terminal 3,5x EBITDA, costos fijos auditados), selecciona una zona en el panel "Zonas".</span>
+        </div>
         <div className="grid grid-cols-2 gap-2 text-xs">
           <NumField k="inversionInicial" label="Inversión inicial (CLP)" step={100000} />
           <NumField k="capitalTrabajo" label="Capital de trabajo (CLP)" step={100000} />

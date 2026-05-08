@@ -3,33 +3,59 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { SensitivityTornado } from '../charts/SensitivityTornado';
 import { useProjectStore } from '@/store/projectStore';
 import { buildPureFlow } from '@/lib/finance/puroFlow';
+import { calcularUbicacion, UBICACIONES } from '@/lib/finance/cafeModel';
 import { useMemo } from 'react';
 import { formatCLP } from '@/lib/utils';
 
 export function SensitivityPanel() {
   const inputs = useProjectStore((s) => s.inputs);
-  const { sensitivity, flujoPuro } = useFinancialModel();
+  const selectedLocationId = useProjectStore((s) => s.selectedLocationId);
+  const { sensitivity, flujoPuro, usandoModeloCorregido } = useFinancialModel();
 
-  // Heatmap precio × demanda
+  // Heatmap precio × demanda — usa el mismo modelo que el FinancialPanel
+  // (cafeModel si hay zona seleccionada, modelo viejo si no)
   const heatmap = useMemo(() => {
     const priceFactors = [0.85, 0.92, 1.0, 1.08, 1.15];
     const demandFactors = [0.7, 0.85, 1.0, 1.15, 1.3];
+
+    const ubic = selectedLocationId
+      ? UBICACIONES.find((u) => u.id === selectedLocationId)
+      : null;
+
     const grid = priceFactors.map((pf) =>
       demandFactors.map((df) => {
-        const r = buildPureFlow({
-          ...inputs,
-          ticketPromedio: inputs.ticketPromedio * pf,
-          combosPorDiaBase: inputs.combosPorDiaBase * df,
-        });
-        return { pf, df, van: r.van };
+        let van: number;
+        if (ubic) {
+          const u2 = {
+            ...ubic,
+            ticketPromedio: ubic.ticketPromedio * pf,
+            combosDiaBase: ubic.combosDiaBase * df,
+          };
+          van = calcularUbicacion(u2, 'base').van;
+        } else {
+          const r = buildPureFlow({
+            ...inputs,
+            ticketPromedio: inputs.ticketPromedio * pf,
+            combosPorDiaBase: inputs.combosPorDiaBase * df,
+          });
+          van = r.van;
+        }
+        return { pf, df, van };
       }),
     );
     const allVans = grid.flat().map((c) => c.van);
     return { grid, min: Math.min(...allVans), max: Math.max(...allVans), priceFactors, demandFactors };
-  }, [inputs]);
+  }, [inputs, selectedLocationId]);
 
   return (
     <div className="space-y-3">
+      {usandoModeloCorregido && (
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-50/60 px-3 py-2 text-[10.5px] dark:bg-emerald-950/20">
+          <span className="font-semibold text-emerald-700 dark:text-emerald-400">Sensibilidad calculada con modelo corregido</span>
+          <span className="text-muted-foreground"> · Tcc 14% · VT 3,5x EBITDA · comisión tarjetas</span>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Tornado de sensibilidad</CardTitle>
