@@ -84,13 +84,13 @@ export const defaultInputs: ProjectInputs = {
   costosFijosMensuales: planillaMensualDefault + 1_400_000, // arriendo + servicios + insumos no var
   costosFijosNoLaboralesMensuales: 1_400_000,
   tasaImpuesto: 0.25, // Pro PYME default
-  tasaCostoCapital: 0.12,
+  tasaCostoCapital: 0.14, // Retail food riesgo MEDIO real (CAPM corregido)
   porcentajeDeuda: 0.4,
   tasaBanco: 0.10,
   plazoDeudaAnos: 5,
   depreciacionAnos: 5,
   valorResidual: 0,
-  crecimientoPerpetuidad: 0.02,
+  crecimientoPerpetuidad: 0.025,
   personal: PLANILLA_CAFE_DEFAULT,
   costosNormativosIniciales: costoInicialNormativo(),
   costosNormativosAnuales: costoAnualNormativo(),

@@ -8,20 +8,73 @@ import { AnimatedKPI } from '../ui/AnimatedKPI';
 import { Button } from '../ui/Button';
 import { exportExcel } from '@/lib/export/exportExcel';
 import { exportWord } from '@/lib/export/exportWord';
-import { Download, FileSpreadsheet, TrendingUp, Target, Coins, Calendar, Activity, Banknote } from 'lucide-react';
+import { Download, FileSpreadsheet, TrendingUp, Target, Coins, Calendar, Activity, Banknote, Shield, Edit3 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { UBICACIONES } from '@/lib/finance/cafeModel';
 
 export function FinancialPanel() {
   const inputs = useProjectStore((s) => s.inputs);
   const projectName = useProjectStore((s) => s.projectName);
   const location = useProjectStore((s) => s.location);
+  const selectedLocationId = useProjectStore((s) => s.selectedLocationId);
+  const setActiveTab = useProjectStore((s) => s.setActiveTab);
   const model = useFinancialModel();
 
   const fp = model.flujoPuro;
   const fi = model.flujoInversionista;
+  const ubicSeleccionada = selectedLocationId
+    ? UBICACIONES.find((u) => u.id === selectedLocationId)
+    : null;
 
   return (
     <div className="space-y-3">
+      {/* Banner de origen del modelo */}
+      {model.usandoModeloCorregido && ubicSeleccionada ? (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-2.5 rounded-xl border border-emerald-500/40 bg-gradient-to-br from-emerald-50 to-teal-50/60 px-3 py-2 dark:from-emerald-950/30 dark:to-teal-950/20"
+        >
+          <Shield className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+                Modelo corregido · {ubicSeleccionada.nombre}
+              </div>
+              <button
+                onClick={() => setActiveTab('zonas')}
+                className="text-[10px] font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+              >
+                Cambiar zona →
+              </button>
+            </div>
+            <div className="mt-0.5 text-[10px] text-muted-foreground">
+              Tcc 14% · Valor terminal 3,5x EBITDA · Comisión tarjetas 2,8% · Costos fijos a precio de mercado
+            </div>
+          </div>
+        </motion.div>
+      ) : (
+        <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-50/60 px-3 py-2 dark:bg-amber-950/20">
+          <Edit3 className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" strokeWidth={2.5} />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-[11px] font-bold text-amber-700 dark:text-amber-400">
+                Modelo libre · Inputs editables
+              </div>
+              <button
+                onClick={() => setActiveTab('zonas')}
+                className="text-[10px] font-semibold text-amber-600 hover:underline dark:text-amber-400"
+              >
+                Usar zona pre-evaluada →
+              </button>
+            </div>
+            <div className="mt-0.5 text-[10px] text-muted-foreground">
+              Sin zona seleccionada — los KPIs salen de los supuestos editables abajo
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-2">
         <AnimatedKPI
           label="VAN flujo puro"
