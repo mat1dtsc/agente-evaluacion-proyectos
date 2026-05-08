@@ -188,8 +188,8 @@ let slideNum = 0;
 
   // Texto narrativo
   s.addText([
-    { text: 'Tras corrección y auditoría del modelo financiero', options: { bold: true, color: COLORS.textDark } },
-    { text: ' (costos fijos reales del retail food chileno, comisión de tarjetas, valor terminal por múltiplo EBITDA, tasa de descuento de 14%, penalización por densidad de competencia, ramp-up año a año), ' },
+    { text: 'Bajo el modelo financiero aplicado', options: { bold: true, color: COLORS.textDark } },
+    { text: ' (costos fijos a precio de mercado del retail food chileno, comisión de tarjetas, valor terminal por múltiplo EBITDA, tasa de descuento de 14%, penalización por densidad de competencia, curva de ramp-up año a año), ' },
     { text: GANADORA.u.nombre, options: { bold: true, color: COLORS.accent } },
     { text: ` resulta la única ubicación claramente recomendable. Genera VAN base de ${fmtM(GANADORA.base.van)} con TIR de ${fmtPct(GANADORA.base.tir)}, con un payback de ${GANADORA.base.payback.toFixed(1)} años a partir de una inversión inicial de $${(GANADORA.base.inversionTotal / 1_000_000).toFixed(1)}M (CAPEX + capital de trabajo).` },
   ], {
@@ -839,7 +839,7 @@ let slideNum = 0;
     { text: '✓  El Golf ', options: { bold: true, color: COLORS.positive } },
     { text: `presenta VAN ${fmtM(GANADORA.base.van)} con TIR ${fmtPct(GANADORA.base.tir)} (única zona con score ≥ 65 y resiliencia probada).\n\n` },
     { text: '✓  Modelo robusto ', options: { bold: true, color: COLORS.positive } },
-    { text: 'con corrección de costos (real $850k/mes), comisión tarjetas, valor terminal por múltiplo EBITDA, penalización por competencia y ramp-up año a año.\n\n' },
+    { text: 'con costos fijos a precio de mercado ($850k/mes), comisión tarjetas, valor terminal por múltiplo EBITDA, penalización por competencia y ramp-up año a año.\n\n' },
     { text: '⚠  Escenario pesimista ', options: { bold: true, color: COLORS.warning } },
     { text: 'destruye valor en TODAS las ubicaciones — el plan de contingencia es obligatorio.\n\n' },
     { text: '✗  Santiago Centro NO conviene ', options: { bold: true, color: COLORS.negative } },
