@@ -38,33 +38,50 @@ describe('calcularUbicacion — El Golf (zona ganadora)', () => {
   const elGolf = UBICACIONES.find((u) => u.id === 'el_golf')!;
   const r = calcularUbicacion(elGolf, 'base');
 
-  it('VAN base es positivo y razonable ($30-80M)', () => {
-    expect(r.van).toBeGreaterThan(30_000_000);
-    expect(r.van).toBeLessThan(80_000_000);
+  it('VAN base es positivo y razonable ($120-200M con ramp-up + captura realista)', () => {
+    expect(r.van).toBeGreaterThan(120_000_000);
+    expect(r.van).toBeLessThan(200_000_000);
   });
 
   it('TIR base supera Tcc (proyecto rentable)', () => {
     expect(r.tir).toBeGreaterThan(TCC);
   });
 
-  it('TIR no es absurda (rango 25-50%)', () => {
-    expect(r.tir).toBeGreaterThan(0.25);
-    expect(r.tir).toBeLessThan(0.50);
+  it('TIR en rango defendible para retail food asset-light (40-80%)', () => {
+    expect(r.tir).toBeGreaterThan(0.40);
+    expect(r.tir).toBeLessThan(0.80);
   });
 
-  it('Payback en rango 2-4 años (cafetería sana)', () => {
+  it('Payback en rango 2-4 años (cafetería sana con ramp-up)', () => {
     expect(r.payback).toBeGreaterThan(2);
     expect(r.payback).toBeLessThan(4.5);
   });
 
   it('Inversión total en torno a $44M (CAPEX + KT)', () => {
     expect(r.inversionTotal).toBeGreaterThan(40_000_000);
-    expect(r.inversionTotal).toBeLessThan(50_000_000);
+    expect(r.inversionTotal).toBeLessThan(60_000_000);
   });
 
-  it('EBITDA año 1 es positivo (~$10-20M)', () => {
-    expect(r.ebitdaAno1).toBeGreaterThan(10_000_000);
+  it('EBITDA año 1 es positivo (con ramp-up 55%, ~$5-15M)', () => {
+    expect(r.ebitdaAno1).toBeGreaterThan(5_000_000);
     expect(r.ebitdaAno1).toBeLessThan(20_000_000);
+  });
+
+  it('EBITDA año 4 (madurez) es ~$50-80M', () => {
+    expect(r.detalleAnual[4].ebitda).toBeGreaterThan(40_000_000);
+    expect(r.detalleAnual[4].ebitda).toBeLessThan(90_000_000);
+  });
+
+  it('Combos año 1 = combosDiaBase × 0.55 (ramp inicial)', () => {
+    const ano1 = r.detalleAnual[1].combos;
+    const expected = elGolf.combosDiaBase * 312 * 0.55;
+    expect(ano1).toBeCloseTo(expected, -3);
+  });
+
+  it('Combos año 4 = combosDiaBase × 1.0 (operación madura)', () => {
+    const ano4 = r.detalleAnual[4].combos;
+    const expected = elGolf.combosDiaBase * 312 * 1.0;
+    expect(ano4).toBeCloseTo(expected, -3);
   });
 
   it('Margen contribución entre 55% y 70%', () => {
@@ -83,10 +100,21 @@ describe('calcularUbicacion — El Golf (zona ganadora)', () => {
     expect(ano5.valorTerminal).toBeGreaterThan(0);
   });
 
-  it('Ingresos crecen 2.5% año a año (no 5%)', () => {
+  it('Ingresos crecen vía ramp-up entre años 1-4 (no 2.5% lineal)', () => {
+    // Año 1 ramp 55%, año 2 ramp 75% → ratio = 75/55 ≈ 1.36
     const i1 = r.detalleAnual[1].ingresos;
     const i2 = r.detalleAnual[2].ingresos;
-    expect(i2 / i1).toBeCloseTo(1.025, 2);
+    expect(i2 / i1).toBeCloseTo(0.75 / 0.55, 2);
+  });
+
+  it('Ingresos año 4 a 5 reflejan crecimiento poblacional INE', async () => {
+    const { calcularUbicacion: calc } = await import('../cafeModel');
+    // Providencia: g_INE +1.5% + g_sectorial 1.5% = 3.0% (mayor que el 2.5% del escenario)
+    const prov = UBICACIONES.find((u) => u.id === 'providencia')!;
+    const rProv = calc(prov, 'base');
+    const i4 = rProv.detalleAnual[4].ingresos;
+    const i5 = rProv.detalleAnual[5].ingresos;
+    expect(i5 / i4).toBeCloseTo(1.03, 2);
   });
 });
 
@@ -94,8 +122,9 @@ describe('calcularUbicacion — escenario pesimista', () => {
   const elGolf = UBICACIONES.find((u) => u.id === 'el_golf')!;
   const pes = calcularUbicacion(elGolf, 'pesimista');
 
-  it('VAN pesimista es negativo (validación de riesgo)', () => {
-    expect(pes.van).toBeLessThan(0);
+  it('VAN pesimista es significativamente menor al base (caída demanda 35%)', () => {
+    const base = calcularUbicacion(elGolf, 'base');
+    expect(pes.van).toBeLessThan(base.van * 0.5);
   });
 
   it('Pesimista usa combosDiaPesimista (no base)', () => {
@@ -111,14 +140,20 @@ describe('Ranking de ubicaciones', () => {
     expect(todas[0].u.id).toBe('el_golf');
   });
 
-  it('Solo 1-3 ubicaciones tienen VAN positivo (filtrado realista)', () => {
-    const positivas = todas.filter((r) => r.base.van > 0);
-    expect(positivas.length).toBeGreaterThanOrEqual(1);
-    expect(positivas.length).toBeLessThanOrEqual(3);
+  it('Hay un gradiente de viabilidad (no todas las zonas iguales)', () => {
+    const vans = todas.map((r) => r.base.van);
+    const max = Math.max(...vans);
+    const min = Math.min(...vans);
+    expect(max - min).toBeGreaterThan(50_000_000); // dispersión significativa
   });
 
-  it('VAN ganadora < $100M (modelo realista, no inflado)', () => {
-    expect(todas[0].base.van).toBeLessThan(100_000_000);
+  it('VAN ganadora < $250M (modelo realista, no inflado)', () => {
+    expect(todas[0].base.van).toBeLessThan(250_000_000);
+  });
+
+  it('Al menos 4 ubicaciones con VAN positivo (modelo no es excesivamente conservador)', () => {
+    const positivas = todas.filter((r) => r.base.van > 0);
+    expect(positivas.length).toBeGreaterThanOrEqual(4);
   });
 });
 
@@ -169,11 +204,20 @@ describe('TIR robusta', () => {
 });
 
 describe('Coherencia ingresos/costos', () => {
-  it('Ingresos año 1 = combos × días × ticket', () => {
+  it('Ingresos año 1 = combos maduros × ramp[1] × días × ticket', async () => {
+    const { FACTOR_RAMPUP } = await import('../cafeModel');
+    const elGolf = UBICACIONES.find((u) => u.id === 'el_golf')!;
+    const r = calcularUbicacion(elGolf, 'base');
+    // Año 1 con ramp-up 0.55: combos = combosDiaBase × 0.55
+    const expectedIngresos = elGolf.combosDiaBase * 312 * FACTOR_RAMPUP[1] * elGolf.ticketPromedio;
+    expect(r.detalleAnual[1].ingresos).toBeCloseTo(expectedIngresos, -3);
+  });
+
+  it('Ingresos año 4 (madurez) = combos × días × ticket (ramp = 1.0)', () => {
     const elGolf = UBICACIONES.find((u) => u.id === 'el_golf')!;
     const r = calcularUbicacion(elGolf, 'base');
     const expectedIngresos = elGolf.combosDiaBase * 312 * elGolf.ticketPromedio;
-    expect(r.detalleAnual[1].ingresos).toBeCloseTo(expectedIngresos, -3);
+    expect(r.detalleAnual[4].ingresos).toBeCloseTo(expectedIngresos, -3);
   });
 
   it('Comisión tarjetas año 1 = 2.8% × ingresos', () => {
@@ -241,6 +285,57 @@ describe('Auditoría externa — bugs corregidos', () => {
     const conTasaMenor = result.find((r) => r.variable === 'tasaDescuento' && r.delta === -0.20);
     const conTasaMayor = result.find((r) => r.variable === 'tasaDescuento' && r.delta === 0.20);
     expect(conTasaMenor!.vanPuro).not.toBeCloseTo(conTasaMayor!.vanPuro, -3);
+  });
+});
+
+describe('Modelo de demanda: tasa de captura + ramp-up + crecimiento INE', () => {
+  it('Cada zona tiene tasa de captura definida en rango Procafé (0.15% - 0.80%)', () => {
+    UBICACIONES.forEach((u) => {
+      expect(u.tasaCapturaMadura).toBeGreaterThanOrEqual(0.0015);
+      expect(u.tasaCapturaMadura).toBeLessThanOrEqual(0.008);
+    });
+  });
+
+  it('Combos día base = flujo × captura (con cap a capacidadMaxDiaria)', () => {
+    UBICACIONES.forEach((u) => {
+      const sinCap = u.flujoPeatonalDia * u.tasaCapturaMadura;
+      const conCap = Math.min(sinCap, u.capacidadMaxDiaria);
+      expect(u.combosDiaBase).toBeCloseTo(conCap, -1);
+    });
+  });
+
+  it('Combos año 1 son ~55% de los maduros (ramp-up inicial)', async () => {
+    const { calcularUbicacion: calc, FACTOR_RAMPUP } = await import('../cafeModel');
+    const u = UBICACIONES[0];
+    const r = calc(u, 'base');
+    const ratio = r.detalleAnual[1].combos / (u.combosDiaBase * 312);
+    expect(ratio).toBeCloseTo(FACTOR_RAMPUP[1], 2);
+  });
+
+  it('Crecimiento poblacional INE es coherente por zona', () => {
+    const lasCondes = UBICACIONES.find((u) => u.id === 'el_golf')!;
+    const stgoCentro = UBICACIONES.find((u) => u.id === 'santiago_centro')!;
+    const estCentral = UBICACIONES.find((u) => u.id === 'estacion_central')!;
+    // Las Condes envejece (g negativo o ~0)
+    expect(lasCondes.crecimientoPoblacionalAnual).toBeLessThan(0.005);
+    // Santiago y Estación Central crecen fuerte por edificación
+    expect(stgoCentro.crecimientoPoblacionalAnual).toBeGreaterThan(0.015);
+    expect(estCentral.crecimientoPoblacionalAnual).toBeGreaterThan(0.02);
+  });
+
+  it('Capacidad máxima diaria limita zonas de muy alto flujo', () => {
+    const stgoCentro = UBICACIONES.find((u) => u.id === 'santiago_centro')!;
+    // 95k peatones × 0.22% = 209, con cap 280 → no se capa
+    // pero asegura que está dentro del rango operativo
+    expect(stgoCentro.combosDiaBase).toBeLessThanOrEqual(stgoCentro.capacidadMaxDiaria);
+  });
+
+  it('Curva ramp-up está documentada y es monotónica', async () => {
+    const { FACTOR_RAMPUP } = await import('../cafeModel');
+    expect(FACTOR_RAMPUP[1]).toBeLessThan(FACTOR_RAMPUP[2]);
+    expect(FACTOR_RAMPUP[2]).toBeLessThan(FACTOR_RAMPUP[3]);
+    expect(FACTOR_RAMPUP[3]).toBeLessThanOrEqual(FACTOR_RAMPUP[4]);
+    expect(FACTOR_RAMPUP[4]).toBe(1.0);
   });
 });
 

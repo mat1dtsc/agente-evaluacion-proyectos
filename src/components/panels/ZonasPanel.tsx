@@ -126,6 +126,19 @@ export function ZonasPanel() {
         </div>
       </div>
 
+      {/* Explainer del modelo de demanda */}
+      <details className="rounded-lg border border-blue-500/30 bg-blue-50/40 px-3 py-2 text-[10.5px] dark:bg-blue-950/15">
+        <summary className="cursor-pointer font-semibold text-blue-700 dark:text-blue-400">
+          📊 Cómo se calcula la demanda (clic para detalles)
+        </summary>
+        <div className="mt-2 space-y-1.5 text-muted-foreground">
+          <div><strong className="text-foreground">Combos/día madura</strong> = Flujo peatonal OSM × tasa captura zona (cap a capacidad física 200-280)</div>
+          <div><strong className="text-foreground">Captura típica (Procafé 2024):</strong> oficinas premium 0.45-0.65% · transit hub 0.18-0.30% · residencial/plaza 0.45-0.60%</div>
+          <div><strong className="text-foreground">Ramp-up (Achiga 2024):</strong> año 1 = 55% · año 2 = 75% · año 3 = 90% · años 4-5 = 100%</div>
+          <div><strong className="text-foreground">Crecimiento por zona:</strong> g_INE_proyección_2024 + 1.5% sectorial Procafé (con piso del escenario)</div>
+        </div>
+      </details>
+
       {/* Grid de zonas (ordenadas por VAN desc) */}
       <div className="grid grid-cols-1 gap-2.5">
         <AnimatePresence>
@@ -261,9 +274,25 @@ function ZoneCard({ r, rank, selected, onSelect }: ZoneCardProps) {
 
           {/* Detalles operacionales */}
           <div className="mt-2 grid grid-cols-3 gap-2 text-[9.5px]">
-            <Detail icon={<Coffee className="h-2.5 w-2.5" />} label="Combos/día" value={r.base.combosDia.toString()} />
+            <Detail icon={<Coffee className="h-2.5 w-2.5" />} label="Combos/día (4y)" value={r.base.combosDia.toString()} />
             <Detail label="Ticket" value={`$${r.u.ticketPromedio.toLocaleString('es-CL')}`} />
             <Detail label="Margen" value={formatPct(r.base.margenContrib, 0)} />
+          </div>
+
+          {/* NUEVO: transparencia del modelo de demanda */}
+          <div className="mt-1.5 grid grid-cols-3 gap-2 rounded-md border border-blue-500/20 bg-blue-50/40 px-2 py-1.5 text-[9px] dark:bg-blue-950/15">
+            <Detail
+              label="Captura"
+              value={formatPct(r.u.tasaCapturaMadura, 2)}
+            />
+            <Detail
+              label="Ramp y1→y4"
+              value={`${Math.round(r.base.combosDia * 0.55)} → ${r.base.combosDia}`}
+            />
+            <Detail
+              label="g INE"
+              value={formatPct(r.u.crecimientoPoblacionalAnual, 1)}
+            />
           </div>
 
           {/* Pesimista (resiliencia) */}

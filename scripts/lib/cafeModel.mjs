@@ -127,13 +127,23 @@ export function valorRecuperoActivos(ano) {
 }
 
 // ============================================================
-// 7 UBICACIONES — PARÁMETROS CALIBRADOS A LA REALIDAD
+// CURVA DE RAMP-UP año a año (Achiga 2024 retail food)
 // ============================================================
-// Ticket por zona: refleja precio que aguanta el cliente típico
-// Costo variable por zona: ticket alto = combo premium con producto envasado
-//                          de mayor costo (sándwich gourmet vs croissant simple)
-// Combos/día base: realista para cafetería 30-35 m² con 1 caja en zona buena
-//                  capacidad máxima física ≈ 200 combos/día
+export const FACTOR_RAMPUP = { 1: 0.55, 2: 0.75, 3: 0.90, 4: 1.00, 5: 1.00 };
+
+function calcCombosBase(flujo, captura, capacidad) {
+  return Math.round(Math.min(flujo * captura, capacidad));
+}
+
+// ============================================================
+// 7 UBICACIONES — calibradas con flujo peatonal × tasa captura
+// ============================================================
+// Tasas de captura típicas (Procafé 2024):
+//   · Zonas laborales premium:   0.45 - 0.65%
+//   · Zonas mixtas con compet.:  0.40 - 0.55%
+//   · Zonas residenciales/plaza: 0.45 - 0.60%
+//   · Transit hub (Metro):       0.18 - 0.30%
+//   · Universitarias:            0.30 - 0.45%
 // ============================================================
 export const UBICACIONES = [
   {
@@ -152,10 +162,12 @@ export const UBICACIONES = [
     ingresoMedioComuna: 3_650_000,
     metrosAEstacionMetro: 180,
     ticketPromedio: 4_500,
-    costoVariableUnitario: 1_700, // combo premium: espresso doble + sándwich envasado gourmet
-    combosDiaBase: 95,            // ajustado: zona oficinas, demanda concentrada L-V
-    combosDiaPesimista: 60,
-    combosDiaOptimista: 130,
+    costoVariableUnitario: 1_700,
+    tasaCapturaMadura: 0.0055, capacidadMaxDiaria: 220,
+    crecimientoPoblacionalAnual: -0.005,
+    combosDiaBase: calcCombosBase(28_000, 0.0055, 220),
+    combosDiaPesimista: calcCombosBase(28_000, 0.0036, 220),
+    combosDiaOptimista: calcCombosBase(28_000, 0.0072, 220),
     notasZona: 'Oficinas torre AAA. Ejecutivos. Peak 8:30, 13:00, 16:30. Ticket alto pero demanda concentrada lunes-viernes (sábado cae 60%, domingo cero). Riesgo: dependencia 100% de oficinas.',
   },
   {
@@ -175,9 +187,11 @@ export const UBICACIONES = [
     metrosAEstacionMetro: 220,
     ticketPromedio: 3_800,
     costoVariableUnitario: 1_550,
-    combosDiaBase: 90,
-    combosDiaPesimista: 55,
-    combosDiaOptimista: 130,
+    tasaCapturaMadura: 0.0045, capacidadMaxDiaria: 220,
+    crecimientoPoblacionalAnual: -0.005,
+    combosDiaBase: calcCombosBase(35_000, 0.0045, 220),
+    combosDiaPesimista: calcCombosBase(35_000, 0.0029, 220),
+    combosDiaOptimista: calcCombosBase(35_000, 0.0058, 220),
     notasZona: 'Mix oficinas + retail + residencial alto. Estación Tobalaba 22M pax/año. Alta competencia (Starbucks, Juan Valdez, Café Capital). Margen presionado.',
   },
   {
@@ -197,9 +211,11 @@ export const UBICACIONES = [
     metrosAEstacionMetro: 850,
     ticketPromedio: 4_200,
     costoVariableUnitario: 1_650,
-    combosDiaBase: 70,
-    combosDiaPesimista: 40,
-    combosDiaOptimista: 105,
+    tasaCapturaMadura: 0.0055, capacidadMaxDiaria: 200,
+    crecimientoPoblacionalAnual: -0.003,
+    combosDiaBase: calcCombosBase(22_000, 0.0055, 200),
+    combosDiaPesimista: calcCombosBase(22_000, 0.0036, 200),
+    combosDiaOptimista: calcCombosBase(22_000, 0.0072, 200),
     notasZona: 'Mall Parque Arauco aledaño + corporativo. Ticket muy alto. Dependencia de Mall (estacional). Sin Metro cercano = depende de auto.',
   },
   {
@@ -219,9 +235,11 @@ export const UBICACIONES = [
     metrosAEstacionMetro: 95,
     ticketPromedio: 3_700,
     costoVariableUnitario: 1_500,
-    combosDiaBase: 95,
-    combosDiaPesimista: 60,
-    combosDiaOptimista: 140,
+    tasaCapturaMadura: 0.0048, capacidadMaxDiaria: 240,
+    crecimientoPoblacionalAnual: 0.015,
+    combosDiaBase: calcCombosBase(38_000, 0.0048, 240),
+    combosDiaPesimista: calcCombosBase(38_000, 0.0031, 240),
+    combosDiaOptimista: calcCombosBase(38_000, 0.0062, 240),
     notasZona: 'Mix oficinas + residencial. Estación Pedro de Valdivia 9.5M pax/año. Mayor competencia RM (riesgo). Cliente potencialmente leal por barrio establecido.',
   },
   {
@@ -241,9 +259,11 @@ export const UBICACIONES = [
     metrosAEstacionMetro: 320,
     ticketPromedio: 3_300,
     costoVariableUnitario: 1_400,
-    combosDiaBase: 80,
-    combosDiaPesimista: 50,
-    combosDiaOptimista: 120,
+    tasaCapturaMadura: 0.0058, capacidadMaxDiaria: 200,
+    crecimientoPoblacionalAnual: 0.013,
+    combosDiaBase: calcCombosBase(24_000, 0.0058, 200),
+    combosDiaPesimista: calcCombosBase(24_000, 0.0038, 200),
+    combosDiaOptimista: calcCombosBase(24_000, 0.0075, 200),
     notasZona: 'Mix universitario (UMCE, Católica San Joaquín cercana) + residencial alto. Plaza activa fines de semana. Crecimiento demanda 4% anual proyectado.',
   },
   {
@@ -263,9 +283,11 @@ export const UBICACIONES = [
     metrosAEstacionMetro: 80,
     ticketPromedio: 2_900,
     costoVariableUnitario: 1_350,
-    combosDiaBase: 130,
-    combosDiaPesimista: 80,
-    combosDiaOptimista: 200,
+    tasaCapturaMadura: 0.0022, capacidadMaxDiaria: 280,
+    crecimientoPoblacionalAnual: 0.025,
+    combosDiaBase: calcCombosBase(95_000, 0.0022, 280),
+    combosDiaPesimista: calcCombosBase(95_000, 0.0014, 280),
+    combosDiaOptimista: calcCombosBase(95_000, 0.0029, 280),
     notasZona: 'Máximo flujo peatonal RM (95k pax/día). Mix laboral + turismo + transit. Ticket bajo. Alta competencia (145 cafés/km²). Volumen alto compensa pero margen presionado.',
   },
   {
@@ -285,9 +307,11 @@ export const UBICACIONES = [
     metrosAEstacionMetro: 150,
     ticketPromedio: 2_700,
     costoVariableUnitario: 1_300,
-    combosDiaBase: 110,
-    combosDiaPesimista: 60,
-    combosDiaOptimista: 180,
+    tasaCapturaMadura: 0.0035, capacidadMaxDiaria: 240,
+    crecimientoPoblacionalAnual: 0.030,
+    combosDiaBase: calcCombosBase(42_000, 0.0035, 240),
+    combosDiaPesimista: calcCombosBase(42_000, 0.0023, 240),
+    combosDiaOptimista: calcCombosBase(42_000, 0.0046, 240),
     notasZona: 'USACH + Estación Central intermodal 19.5M pax/año. Ticket bajo, alta rotación. Estacional fuerte (caída en período sin clases dic-feb).',
   },
 ];
@@ -332,9 +356,16 @@ export function calcularUbicacion(u, escenario = 'base') {
     utilidadNeta: 0, flujoOper: 0, flujoNeto: -inversionTotal,
   }];
 
+  // Crecimiento efectivo por zona = max(g_pobl_INE + g_sectorial × 0.5, supuesto)
+  const gSectorial = 0.03;
+  const gZona = (u.crecimientoPoblacionalAnual ?? 0) + gSectorial * 0.5;
+  const gEfectivo = Math.max(gZona, G_DEMANDA);
+
   let creditoFiscal = 0;
   for (let t = 1; t <= HORIZONTE_ANOS; t += 1) {
-    const factorDemanda = Math.pow(1 + G_DEMANDA, t - 1);
+    // Ramp-up: año 1 captura 55%, año 2 75%, año 3 90%, año 4-5 100% (+ g)
+    const ramp = FACTOR_RAMPUP[t] ?? 1.0;
+    const factorDemanda = ramp * Math.pow(1 + gEfectivo, Math.max(0, t - 4));
     const combosAno = combosDia * DIAS_OPER_ANO * factorDemanda;
     const ingresos = combosAno * u.ticketPromedio;
     const cvTotal = combosAno * cv;

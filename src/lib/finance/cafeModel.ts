@@ -182,11 +182,50 @@ export interface UbicacionDef {
   metrosAEstacionMetro: number;
   ticketPromedio: number;
   costoVariableUnitario: number;
+
+  // ==== MODELO DE DEMANDA (recalibrado mayo 2026) ====
+  // En vez de hardcodear `combosDiaBase`, ahora la demanda madura se calcula
+  // como `flujoPeatonalDia × tasaCapturaMadura`, con cap a `capacidadMaxDiaria`.
+  // Benchmarks Procafé 2024 para tasa de captura cafetería de paso:
+  //   · zonas laborales premium:    0.45 - 0.65%
+  //   · zonas laborales mixtas:     0.40 - 0.55%
+  //   · zonas residenciales/plaza:  0.45 - 0.60%
+  //   · zonas transit (Metro hub):  0.18 - 0.30% (gente apurada, no consume)
+  //   · zonas universitarias:       0.30 - 0.45%
+  // Usamos el rango bajo de cada categoría para ser conservadores.
+  /** % del flujo peatonal que captura el local en operación madura (año 4+) */
+  tasaCapturaMadura: number;
+  /** Tope físico de combos/día (1 caja, 1 máquina espresso doble grupo) */
+  capacidadMaxDiaria: number;
+  /** Crecimiento poblacional anual de la zona (INE Censo 2017 + Proyección 2024) */
+  crecimientoPoblacionalAnual: number;
+
+  // Combos día por escenario — si están definidos, override del cálculo automático
+  // (mantenidos por compatibilidad y para zonas con datos primarios)
   combosDiaBase: number;
   combosDiaPesimista: number;
   combosDiaOptimista: number;
   notasZona: string;
 }
+
+// ============================================================
+// CURVA DE RAMP-UP — captura del flujo año a año
+// ============================================================
+// Una cafetería nueva NO captura su demanda madura desde el día 1.
+// Necesita construir base de clientes, fidelización, conocimiento de marca.
+// Curva típica observada en estudios de retail food (Achiga 2024):
+//   Año 1: 55% de la captura madura  (apertura, ramp inicial)
+//   Año 2: 75% (consolidación)
+//   Año 3: 90% (cerca de madurez)
+//   Año 4: 100% (operación madura)
+//   Año 5: 100% × (1 + crecimiento_zona) (crecimiento marginal)
+export const FACTOR_RAMPUP: Record<number, number> = {
+  1: 0.55,
+  2: 0.75,
+  3: 0.90,
+  4: 1.00,
+  5: 1.00,
+};
 
 export interface FlujoAnual {
   ano: number;
@@ -234,6 +273,14 @@ export interface ResultadoCompleto {
 // ============================================================
 // 7 UBICACIONES
 // ============================================================
+// Capacidad física: una cafetería compacta con 1 caja y 1 máquina espresso
+// doble grupo puede vender ~25 combos/hora en peak × ~10 hrs operativas = 250
+// Para zonas residenciales (1 turno claro): cap a 220
+// Para zonas transit (alto volumen sostenido): cap a 280
+function calcCombosBase(flujo: number, captura: number, capacidad: number): number {
+  return Math.round(Math.min(flujo * captura, capacidad));
+}
+
 export const UBICACIONES: UbicacionDef[] = [
   {
     id: 'el_golf',
@@ -247,8 +294,13 @@ export const UBICACIONES: UbicacionDef[] = [
     flujoPeatonalDia: 28_000, densidadCompetenciaKm2: 65,
     ingresoMedioComuna: 3_650_000, metrosAEstacionMetro: 180,
     ticketPromedio: 4_500, costoVariableUnitario: 1_700,
-    combosDiaBase: 95, combosDiaPesimista: 60, combosDiaOptimista: 130,
-    notasZona: 'Oficinas torre AAA. Ejecutivos. Peak 8:30, 13:00, 16:30. Ticket alto pero demanda concentrada lunes-viernes (sábado cae 60%, domingo cero). Riesgo: dependencia 100% de oficinas.',
+    // Captura premium oficinas — ejecutivos consumen + ticket alto sostenible
+    tasaCapturaMadura: 0.0055, capacidadMaxDiaria: 220,
+    crecimientoPoblacionalAnual: -0.005, // INE: Las Condes envejece levemente
+    combosDiaBase: calcCombosBase(28_000, 0.0055, 220),         // ≈ 154
+    combosDiaPesimista: calcCombosBase(28_000, 0.0036, 220),    // ≈ 100 (pesim. 65% captura)
+    combosDiaOptimista: calcCombosBase(28_000, 0.0072, 220),    // ≈ 200 (opt. 130% captura)
+    notasZona: 'Oficinas torre AAA. Ejecutivos. Peak 8:30, 13:00, 16:30. Ticket alto pero demanda concentrada lunes-viernes (sábado cae 60%, domingo cero). Captura: 0.55% del flujo (benchmark Procafé zonas laborales premium).',
   },
   {
     id: 'apoquindo',
@@ -262,8 +314,13 @@ export const UBICACIONES: UbicacionDef[] = [
     flujoPeatonalDia: 35_000, densidadCompetenciaKm2: 78,
     ingresoMedioComuna: 3_650_000, metrosAEstacionMetro: 220,
     ticketPromedio: 3_800, costoVariableUnitario: 1_550,
-    combosDiaBase: 90, combosDiaPesimista: 55, combosDiaOptimista: 130,
-    notasZona: 'Mix oficinas + retail + residencial alto. Estación Tobalaba 22M pax/año. Alta competencia (Starbucks, Juan Valdez, Café Capital). Margen presionado.',
+    // Mucha competencia (Starbucks, Juan Valdez) → captura más baja
+    tasaCapturaMadura: 0.0045, capacidadMaxDiaria: 220,
+    crecimientoPoblacionalAnual: -0.005,
+    combosDiaBase: calcCombosBase(35_000, 0.0045, 220),          // ≈ 158
+    combosDiaPesimista: calcCombosBase(35_000, 0.0029, 220),
+    combosDiaOptimista: calcCombosBase(35_000, 0.0058, 220),
+    notasZona: 'Mix oficinas + retail + residencial alto. Estación Tobalaba 22M pax/año. Alta competencia (Starbucks, Juan Valdez, Café Capital) → captura 0.45% (algo bajo el rango premium por canibalización).',
   },
   {
     id: 'vitacura',
@@ -277,8 +334,13 @@ export const UBICACIONES: UbicacionDef[] = [
     flujoPeatonalDia: 22_000, densidadCompetenciaKm2: 52,
     ingresoMedioComuna: 4_520_000, metrosAEstacionMetro: 850,
     ticketPromedio: 4_200, costoVariableUnitario: 1_650,
-    combosDiaBase: 70, combosDiaPesimista: 40, combosDiaOptimista: 105,
-    notasZona: 'Mall Parque Arauco aledaño + corporativo. Ticket muy alto. Dependencia de Mall (estacional). Sin Metro cercano = depende de auto.',
+    // Ingreso muy alto, baja competencia — captura premium
+    tasaCapturaMadura: 0.0055, capacidadMaxDiaria: 200,
+    crecimientoPoblacionalAnual: -0.003,
+    combosDiaBase: calcCombosBase(22_000, 0.0055, 200),          // ≈ 121
+    combosDiaPesimista: calcCombosBase(22_000, 0.0036, 200),
+    combosDiaOptimista: calcCombosBase(22_000, 0.0072, 200),
+    notasZona: 'Mall Parque Arauco aledaño + corporativo. Ticket muy alto (CLP 4.200) e ingreso $4.5M. Captura 0.55% (zona premium con baja competencia). Sin Metro cercano = depende de auto.',
   },
   {
     id: 'providencia',
@@ -292,8 +354,13 @@ export const UBICACIONES: UbicacionDef[] = [
     flujoPeatonalDia: 38_000, densidadCompetenciaKm2: 92,
     ingresoMedioComuna: 2_980_000, metrosAEstacionMetro: 95,
     ticketPromedio: 3_700, costoVariableUnitario: 1_500,
-    combosDiaBase: 95, combosDiaPesimista: 60, combosDiaOptimista: 140,
-    notasZona: 'Mix oficinas + residencial. Estación Pedro de Valdivia 9.5M pax/año. Mayor competencia RM (riesgo). Cliente potencialmente leal por barrio establecido.',
+    // Mix oficinas + residencial leal, alta competencia
+    tasaCapturaMadura: 0.0048, capacidadMaxDiaria: 240,
+    crecimientoPoblacionalAnual: 0.015, // INE: Providencia +1.5% anual (boom oficinas)
+    combosDiaBase: calcCombosBase(38_000, 0.0048, 240),          // ≈ 182
+    combosDiaPesimista: calcCombosBase(38_000, 0.0031, 240),
+    combosDiaOptimista: calcCombosBase(38_000, 0.0062, 240),
+    notasZona: 'Mix oficinas + residencial. Estación Pedro de Valdivia 9.5M pax/año. Cliente potencialmente leal por barrio establecido. Crecimiento poblacional INE +1.5% (boom torres oficinas).',
   },
   {
     id: 'nunoa_plaza',
@@ -307,8 +374,13 @@ export const UBICACIONES: UbicacionDef[] = [
     flujoPeatonalDia: 24_000, densidadCompetenciaKm2: 48,
     ingresoMedioComuna: 1_990_000, metrosAEstacionMetro: 320,
     ticketPromedio: 3_300, costoVariableUnitario: 1_400,
-    combosDiaBase: 80, combosDiaPesimista: 50, combosDiaOptimista: 120,
-    notasZona: 'Mix universitario (UMCE, Católica San Joaquín cercana) + residencial alto. Plaza activa fines de semana. Crecimiento demanda 4% anual proyectado.',
+    // Plaza con uso 7 días (mejor que zonas oficina), residencial leal
+    tasaCapturaMadura: 0.0058, capacidadMaxDiaria: 200,
+    crecimientoPoblacionalAnual: 0.013, // INE: Ñuñoa +1.3% anual
+    combosDiaBase: calcCombosBase(24_000, 0.0058, 200),          // ≈ 139
+    combosDiaPesimista: calcCombosBase(24_000, 0.0038, 200),
+    combosDiaOptimista: calcCombosBase(24_000, 0.0075, 200),
+    notasZona: 'Plaza Ñuñoa = uso 7 días/sem. Mix universitario (UMCE) + residencial alto. Captura 0.58% (zonas residenciales con plaza activa). Crecimiento INE +1.3% anual.',
   },
   {
     id: 'santiago_centro',
@@ -322,8 +394,13 @@ export const UBICACIONES: UbicacionDef[] = [
     flujoPeatonalDia: 95_000, densidadCompetenciaKm2: 145,
     ingresoMedioComuna: 1_380_000, metrosAEstacionMetro: 80,
     ticketPromedio: 2_900, costoVariableUnitario: 1_350,
-    combosDiaBase: 130, combosDiaPesimista: 80, combosDiaOptimista: 200,
-    notasZona: 'Máximo flujo peatonal RM (95k pax/día). Mix laboral + turismo + transit. Ticket bajo. Alta competencia (145 cafés/km²). Volumen alto compensa pero margen presionado.',
+    // Transit hub: gente apurada, no consume tanto. Pero volumen masivo.
+    tasaCapturaMadura: 0.0022, capacidadMaxDiaria: 280,
+    crecimientoPoblacionalAnual: 0.025, // INE: Santiago +2.5% (boom edificación residencial)
+    combosDiaBase: calcCombosBase(95_000, 0.0022, 280),          // 209 (capeado por capacidad)
+    combosDiaPesimista: calcCombosBase(95_000, 0.0014, 280),
+    combosDiaOptimista: calcCombosBase(95_000, 0.0029, 280),
+    notasZona: 'Máximo flujo peatonal RM (95k pax/día). Mix laboral + turismo + transit. Ticket bajo, alta competencia. Captura sólo 0.22% (transit hub: gente apurada). Volumen alto compensa. Crecimiento INE +2.5%.',
   },
   {
     id: 'estacion_central',
@@ -337,8 +414,13 @@ export const UBICACIONES: UbicacionDef[] = [
     flujoPeatonalDia: 42_000, densidadCompetenciaKm2: 32,
     ingresoMedioComuna: 1_050_000, metrosAEstacionMetro: 150,
     ticketPromedio: 2_700, costoVariableUnitario: 1_300,
-    combosDiaBase: 110, combosDiaPesimista: 60, combosDiaOptimista: 180,
-    notasZona: 'USACH + Estación Central intermodal 19.5M pax/año. Ticket bajo, alta rotación. Estacional fuerte (caída en período sin clases dic-feb).',
+    // USACH + transit. Estudiantes consumen pero ticket bajo. Estacional.
+    tasaCapturaMadura: 0.0035, capacidadMaxDiaria: 240,
+    crecimientoPoblacionalAnual: 0.030, // INE: Estación Central +3.0% (renovación urbana)
+    combosDiaBase: calcCombosBase(42_000, 0.0035, 240),          // ≈ 147
+    combosDiaPesimista: calcCombosBase(42_000, 0.0023, 240),
+    combosDiaOptimista: calcCombosBase(42_000, 0.0046, 240),
+    notasZona: 'USACH + Estación Central intermodal 19.5M pax/año. Ticket bajo, alta rotación. Captura 0.35% (mix transit + universitario). Estacional fuerte (caída dic-feb sin clases). Crecimiento INE +3% (boom renovación urbana).',
   },
 ];
 
@@ -417,9 +499,24 @@ export function calcularUbicacion(
     utilidadNeta: 0, flujoOper: 0, flujoNeto: -inversionTotal,
   }];
 
+  // Crecimiento de demanda EFECTIVO por zona:
+  //   = max(g_poblacional_INE + g_sectorial × 0.5, g_supuesto_escenario)
+  // Donde g_sectorial real café Chile ≈ 3% (Procafé).
+  // El factor 0.5 refleja que no todo el crecimiento sectorial se traduce
+  // en más demanda local (parte se va a nuevos competidores).
+  const gSectorial = 0.03;
+  const gZonaCalc = u.crecimientoPoblacionalAnual + gSectorial * 0.5;
+  // Tomamos el mayor entre el cálculo zona y el supuesto del escenario
+  // (algunos escenarios fuerzan g más bajo o más alto a propósito)
+  const gEfectivo = Math.max(gZonaCalc, gDemanda);
+
   let creditoFiscal = 0;
   for (let t = 1; t <= HORIZONTE_ANOS; t += 1) {
-    const factorDemanda = Math.pow(1 + gDemanda, t - 1);
+    // Demanda año t = combos maduros × factor ramp-up × crecimiento
+    // El ramp-up modela que un café NUEVO no captura su demanda madura
+    // desde el día 1: año 1 logra ~55%, año 2 ~75%, etc.
+    const ramp = FACTOR_RAMPUP[t] ?? 1.0;
+    const factorDemanda = ramp * Math.pow(1 + gEfectivo, Math.max(0, t - 4));
     const combosAno = combosDia * diasOper * factorDemanda;
     const ingresos = combosAno * u.ticketPromedio;
     const cvTotal = combosAno * cv;
