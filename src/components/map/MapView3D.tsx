@@ -8,6 +8,7 @@ import { METRO_COLORS } from '@/lib/geo/metroLines';
 import { useProjectStore } from '@/store/projectStore';
 import { useBusRoutes, useCasen, useComunasGeoJSON, useDensidad, useMetro, useMetroLineas } from '@/hooks/useDatasets';
 import { useBusStopsNearby, useBusStopsRM, useCafesNearby, useTrafficStreetsNearby, useTrafficStreetsRM, useUrbanEquipmentRM } from '@/hooks/useOSMOverpass';
+import { calcularTodas, scoreUbicacion, veredicto } from '@/lib/finance/cafeModel';
 import { useSettingsStore } from '@/store/settingsStore';
 import { usePerfilHorario } from '@/hooks/useDatasets';
 import { GeocoderSearch } from './GeocoderSearch';
@@ -125,6 +126,21 @@ export function MapView3D({ containerClassName }: Props) {
   const setActiveTab = useProjectStore((s) => s.setActiveTab);
   const setHighlightedComuna = useProjectStore((s) => s.setHighlightedComuna);
   const highlightedComuna = useProjectStore((s) => s.highlightedComuna);
+  const selectedLocationId = useProjectStore((s) => s.selectedLocationId);
+  const setSelectedLocationId = useProjectStore((s) => s.setSelectedLocationId);
+
+  // Calcular puntuaciones del modelo para los pins de las 7 zonas pre-evaluadas
+  const zonasPreEvaluadas = useMemo(() => {
+    const r = calcularTodas();
+    return r.map((res) => ({
+      ...res.u,
+      van: res.base.van,
+      tir: res.base.tir,
+      payback: res.base.payback,
+      score: scoreUbicacion(res),
+      veredicto: veredicto(res).tono, // 'positivo' | 'neutral' | 'negativo'
+    }));
+  }, []);
 
   // Auto-fly cuando location cambia (solo entonces — no en cada render)
   // De este modo el usuario puede hacer pan/zoom libremente sin que la cámara
@@ -475,9 +491,93 @@ export function MapView3D({ containerClassName }: Props) {
 
   }
 
+  // ---- Pins de las 7 zonas pre-evaluadas (siempre visibles)
+  // Color según veredicto: verde recomendado, ámbar aceptable, rojo no conviene
+  const colorPorVeredicto: Record<string, [number, number, number, number]> = {
+    positivo: [16, 185, 129, 235],   // emerald-500
+    neutral:  [245, 158, 11, 235],    // amber-500
+    negativo: [244, 63, 94, 220],     // rose-500
+  };
+  // Halo (anillo exterior)
+  deckLayers.push(
+    new ScatterplotLayer({
+      id: 'zonas-halo',
+      data: zonasPreEvaluadas,
+      getPosition: (d: any) => [d.lng, d.lat],
+      // El radio crece con score (mejor zona = halo más grande)
+      getRadius: (d: any) => 280 + (d.score / 100) * 320,
+      radiusUnits: 'meters',
+      getFillColor: (d: any) => {
+        const c = colorPorVeredicto[d.veredicto] ?? [156, 163, 175, 100];
+        return [c[0], c[1], c[2], 60];
+      },
+      getLineColor: (d: any) => {
+        const c = colorPorVeredicto[d.veredicto] ?? [156, 163, 175, 200];
+        return [c[0], c[1], c[2], 200];
+      },
+      lineWidthMinPixels: 1.5,
+      stroked: true,
+      filled: true,
+      pickable: true,
+      onClick: (info: any) => {
+        if (info.object?.id) {
+          setSelectedLocationId(info.object.id);
+          setLocation({ lat: info.object.lat, lng: info.object.lng, label: info.object.nombre });
+          setActiveTab('zonas');
+        }
+      },
+    }),
+  );
+  // Núcleo
+  deckLayers.push(
+    new ScatterplotLayer({
+      id: 'zonas-core',
+      data: zonasPreEvaluadas,
+      getPosition: (d: any) => [d.lng, d.lat],
+      getRadius: (d: any) => (selectedLocationId === d.id ? 130 : 90),
+      radiusUnits: 'meters',
+      getFillColor: (d: any) => colorPorVeredicto[d.veredicto] ?? [156, 163, 175, 220],
+      getLineColor: () => [255, 255, 255, 255],
+      lineWidthMinPixels: 2.5,
+      stroked: true,
+      filled: true,
+      pickable: true,
+      updateTriggers: { getRadius: [selectedLocationId] },
+      onClick: (info: any) => {
+        if (info.object?.id) {
+          setSelectedLocationId(info.object.id);
+          setLocation({ lat: info.object.lat, lng: info.object.lng, label: info.object.nombre });
+          setActiveTab('zonas');
+        }
+      },
+    }),
+  );
+
   // Tooltip
   const getTooltip = ({ object, layer }: any) => {
     if (!object) return null;
+    // Tooltips de zonas pre-evaluadas
+    if (layer?.id === 'zonas-core' || layer?.id === 'zonas-halo') {
+      const tirStr = Number.isFinite(object.tir) ? `${(object.tir * 100).toFixed(1)}%` : '—';
+      const pbStr = Number.isFinite(object.payback) && object.payback > 0 && object.payback <= 5
+        ? `${object.payback.toFixed(1)}y` : '> 5y';
+      const veredictoStr = object.veredicto === 'positivo' ? '✅ Recomendada'
+        : object.veredicto === 'neutral' ? '⚠️ Aceptable con riesgo' : '❌ No conviene';
+      return {
+        html: `<div style="padding:10px;font-family:Inter,sans-serif;min-width:220px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px">${object.nombre}</div>
+          <div style="opacity:0.7;font-size:11px;margin-bottom:8px">${object.comuna} · ${object.m2} m² · ${object.arriendoUFm2.toFixed(2)} UF/m²</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px">
+            <div><span style="opacity:0.6">VAN:</span> <b>$${object.van.toLocaleString('es-CL')}</b></div>
+            <div><span style="opacity:0.6">TIR:</span> <b>${tirStr}</b></div>
+            <div><span style="opacity:0.6">Payback:</span> <b>${pbStr}</b></div>
+            <div><span style="opacity:0.6">Score:</span> <b>${object.score}/100</b></div>
+          </div>
+          <div style="margin-top:6px;font-size:11px;font-weight:600">${veredictoStr}</div>
+        </div>`,
+        style: { background: 'rgba(20,20,30,0.96)', color: '#fff', borderRadius: '10px', boxShadow: '0 12px 32px rgba(0,0,0,0.5)' },
+      };
+    }
     if (layer?.id === 'densidad') {
       const props = object.properties;
       const data = dataIndex.dens.get(props.codigo);

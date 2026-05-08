@@ -51,10 +51,14 @@ export interface ProjectState {
   setProjectName: (s: string) => void;
 
   // Sincronización mapa ↔ paneles
-  activeTab: 'demografia' | 'flujos' | 'competencia' | 'demanda' | 'financiero' | 'sensibilidad';
+  activeTab: 'zonas' | 'demografia' | 'flujos' | 'competencia' | 'demanda' | 'financiero' | 'sensibilidad';
   setActiveTab: (t: ProjectState['activeTab']) => void;
   highlightedComuna: string | null;
   setHighlightedComuna: (codigo: string | null) => void;
+
+  // Ubicación pre-evaluada seleccionada (para el panel comparativo)
+  selectedLocationId: string | null;
+  setSelectedLocationId: (id: string | null) => void;
 
   // Filtro temporal — afecta heatmap peatonal en vivo
   dayType: 'lunes_viernes' | 'sabado' | 'domingo';
@@ -133,10 +137,13 @@ export const useProjectStore = create<ProjectState>()(
       projectName: 'Café Express - Combo Espresso + Croissant',
       setProjectName: (projectName) => set({ projectName }),
 
-      activeTab: 'demografia',
+      activeTab: 'zonas',
       setActiveTab: (activeTab) => set({ activeTab }),
       highlightedComuna: null,
       setHighlightedComuna: (highlightedComuna) => set({ highlightedComuna }),
+
+      selectedLocationId: null,
+      setSelectedLocationId: (selectedLocationId) => set({ selectedLocationId }),
 
       dayType: 'lunes_viernes',
       hour: 13,

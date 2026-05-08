@@ -1,6 +1,8 @@
 /**
- * Generador de Excel — Análisis Profundo Café Express Combo Envasado
- * Comparativo entre 7 ubicaciones RM con flujo a 60 meses + 5 años + perpetuidad.
+ * Generador de Excel — Análisis Profundo Café Combo Único Envasado
+ *
+ * Usa el modelo financiero corregido en scripts/lib/cafeModel.mjs
+ * (fuente única de verdad compartida con la app web y el Word).
  *
  * Output: ../../public/exports/Analisis_Cafe_Combo_RM.xlsx
  *
@@ -8,390 +10,129 @@
  */
 import XLSX from 'xlsx';
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import {
+  UF, IMM, TASA_IMPUESTO, TASA_IVA, TCC, G_DEMANDA, MULT_EBITDA_TERMINAL,
+  COMISION_TARJETAS, HORIZONTE_ANOS, DIAS_OPER_ANO, CARGAS,
+  PLANILLA, PLANILLA_MENSUAL_TOTAL, COSTOS_FIJOS_NO_LAB,
+  COSTOS_FIJOS_NO_LAB_TOTAL, INVERSION, CAPEX, VIDA_PROMEDIO, DEP_ANUAL,
+  UBICACIONES, calcularUbicacion, calcularTodas, scoreUbicacion, veredicto,
+  costoEmpresa,
+} from '../lib/cafeModel.mjs';
 
 // ============================================================
-// PARÁMETROS DEL MODELO (referencias 2025)
+// FORMATOS
 // ============================================================
-const UF = 39_500;
-const IMM = 510_636;
-const TASA_IMPUESTO = 0.25; // Pro PYME 14 D N°3
-const TASA_IVA = 0.19;
-const TCC = 0.115; // tasa costo capital, riesgo bajo modelo simple
-const G_PERPETUIDAD = 0.02; // crecimiento perpetuidad (sectorial Chile)
-const HORIZONTE_ANOS = 5;
-
-// Cargas patronales chilenas (factor a sueldo bruto)
-const CARGAS = {
-  afcEmp: 0.024,
-  sis: 0.0185,
-  mutual: 0.0095,
-  gratif: 0.25, // 25% bruto con tope 4.75 IMM
-  vacac: 0.0833,
-  iAS: 0.0833,
-};
-const TOPE_GRATIF_MENSUAL = (IMM * 4.75) / 12;
-function costoEmpresa(brutoMensual) {
-  const gratif = Math.min(brutoMensual * CARGAS.gratif, TOPE_GRATIF_MENSUAL);
-  return brutoMensual * (1 + CARGAS.afcEmp + CARGAS.sis + CARGAS.mutual + CARGAS.vacac + CARGAS.iAS) + gratif;
-}
-
-// ============================================================
-// 7 UBICACIONES CANDIDATAS
-// ============================================================
-const UBICACIONES = [
-  {
-    id: 'el_golf',
-    nombre: 'El Golf · Las Condes (financiero)',
-    comuna: 'Las Condes',
-    direccion_referencia: 'Av. Apoquindo 5300 - 5800',
-    arriendoUFm2: 0.95,
-    m2: 35,
-    gastosComunesCLP: 220_000,
-    contribucionesMensualCLP: 95_000,
-    flujoPeatonalDia: 28_000,
-    densidadCompetenciaKm2: 65,
-    ingresoMedioComuna: 3_650_000,
-    metrosAEstacionMetro: 180,
-    ticketPromedio: 4_500,
-    combosDiaBase: 110,
-    combosDiaPesimista: 70,
-    combosDiaOptimista: 170,
-    notasZona: 'Oficinas torre AAA. Ejecutivos. Peak 8:30, 13:00, 16:30. Ticket alto, demanda concentrada lunes-viernes. Domingo cero.',
-  },
-  {
-    id: 'apoquindo',
-    nombre: 'Apoquindo / El Bosque · Las Condes',
-    comuna: 'Las Condes',
-    direccion_referencia: 'Apoquindo 4000 - 4900',
-    arriendoUFm2: 0.75,
-    m2: 35,
-    gastosComunesCLP: 180_000,
-    contribucionesMensualCLP: 75_000,
-    flujoPeatonalDia: 35_000,
-    densidadCompetenciaKm2: 78,
-    ingresoMedioComuna: 3_650_000,
-    metrosAEstacionMetro: 220,
-    ticketPromedio: 3_800,
-    combosDiaBase: 95,
-    combosDiaPesimista: 60,
-    combosDiaOptimista: 145,
-    notasZona: 'Mix oficinas + retail + residencial alto. Estación Tobalaba 22M pax/año. Alta competencia (Starbucks, Juan Valdez, Café Capital).',
-  },
-  {
-    id: 'vitacura',
-    nombre: 'Vitacura · Alonso de Córdova',
-    comuna: 'Vitacura',
-    direccion_referencia: 'Alonso de Córdova 3000 - 4500',
-    arriendoUFm2: 0.80,
-    m2: 35,
-    gastosComunesCLP: 200_000,
-    contribucionesMensualCLP: 90_000,
-    flujoPeatonalDia: 22_000,
-    densidadCompetenciaKm2: 52,
-    ingresoMedioComuna: 4_520_000,
-    metrosAEstacionMetro: 850,
-    ticketPromedio: 4_200,
-    combosDiaBase: 75,
-    combosDiaPesimista: 45,
-    combosDiaOptimista: 120,
-    notasZona: 'Mall Parque Arauco aledaño + corporativo. Ticket muy alto. Dependencia de Mall (estacional). Sin Metro cercano.',
-  },
-  {
-    id: 'providencia',
-    nombre: 'Providencia · Pedro de Valdivia',
-    comuna: 'Providencia',
-    direccion_referencia: 'Pedro de Valdivia 1700 - 2400',
-    arriendoUFm2: 0.65,
-    m2: 35,
-    gastosComunesCLP: 150_000,
-    contribucionesMensualCLP: 65_000,
-    flujoPeatonalDia: 38_000,
-    densidadCompetenciaKm2: 92,
-    ingresoMedioComuna: 2_980_000,
-    metrosAEstacionMetro: 95,
-    ticketPromedio: 3_700,
-    combosDiaBase: 105,
-    combosDiaPesimista: 70,
-    combosDiaOptimista: 160,
-    notasZona: 'Mix oficinas + residencial. Estación Pedro de Valdivia 9.5M pax/año. Mayor competencia RM. Cliente leal posible.',
-  },
-  {
-    id: 'nunoa_plaza',
-    nombre: 'Ñuñoa · Plaza Ñuñoa',
-    comuna: 'Ñuñoa',
-    direccion_referencia: 'Av. Irarrázaval 2700 - 3200',
-    arriendoUFm2: 0.48,
-    m2: 35,
-    gastosComunesCLP: 110_000,
-    contribucionesMensualCLP: 50_000,
-    flujoPeatonalDia: 24_000,
-    densidadCompetenciaKm2: 48,
-    ingresoMedioComuna: 1_990_000,
-    metrosAEstacionMetro: 320,
-    ticketPromedio: 3_300,
-    combosDiaBase: 90,
-    combosDiaPesimista: 55,
-    combosDiaOptimista: 140,
-    notasZona: 'Mix universitario (UMCE, Católica San Joaquín cercana) + residencial alto. Plaza activa fines de semana. Crecimiento demanda 6% anual.',
-  },
-  {
-    id: 'santiago_centro',
-    nombre: 'Santiago Centro · Ahumada',
-    comuna: 'Santiago',
-    direccion_referencia: 'Paseo Ahumada / Estado',
-    arriendoUFm2: 0.55,
-    m2: 30,
-    gastosComunesCLP: 140_000,
-    contribucionesMensualCLP: 55_000,
-    flujoPeatonalDia: 95_000,
-    densidadCompetenciaKm2: 145,
-    ingresoMedioComuna: 1_380_000,
-    metrosAEstacionMetro: 80,
-    ticketPromedio: 2_900,
-    combosDiaBase: 145,
-    combosDiaPesimista: 95,
-    combosDiaOptimista: 230,
-    notasZona: 'Máximo flujo peatonal RM (95k pax/día). Mix laboral + turismo + transit. Ticket bajo. Alta competencia. Volumen alto compensa.',
-  },
-  {
-    id: 'estacion_central',
-    nombre: 'Estación Central · USACH',
-    comuna: 'Estación Central',
-    direccion_referencia: 'Av. Bdo OHiggins 3300 - 3700',
-    arriendoUFm2: 0.38,
-    m2: 30,
-    gastosComunesCLP: 80_000,
-    contribucionesMensualCLP: 35_000,
-    flujoPeatonalDia: 42_000,
-    densidadCompetenciaKm2: 32,
-    ingresoMedioComuna: 1_050_000,
-    metrosAEstacionMetro: 150,
-    ticketPromedio: 2_700,
-    combosDiaBase: 130,
-    combosDiaPesimista: 75,
-    combosDiaOptimista: 210,
-    notasZona: 'USACH + Estación Central intermodal 19.5M pax/año. Ticket bajo, alta rotación. Estacional fuerte (caída en período sin clases dic-feb).',
-  },
-];
-
-// ============================================================
-// PLANILLA RECOMENDADA (3 personas + cargas)
-// ============================================================
-const PLANILLA = [
-  { cargo: 'Barista jefe (manipulador certificado)', cantidad: 1, brutoMensual: 850_000 },
-  { cargo: 'Barista turno tarde (manipulador certificado)', cantidad: 1, brutoMensual: 650_000 },
-  { cargo: 'Reemplazo / aseo (½ jornada)', cantidad: 1, brutoMensual: 510_636 },
-];
-const PLANILLA_MENSUAL_TOTAL = PLANILLA.reduce(
-  (s, p) => s + p.cantidad * costoEmpresa(p.brutoMensual), 0
-);
-
-// ============================================================
-// INVERSIÓN INICIAL DETALLADA
-// ============================================================
-const INVERSION = [
-  { item: 'Máquina espresso 2-grupos semiautomática', costoCLP: 6_500_000, vidaUtil: 7 },
-  { item: 'Molino cónico semiautomático', costoCLP: 1_100_000, vidaUtil: 5 },
-  { item: 'Vitrina refrigerada compacta cadena frío', costoCLP: 1_200_000, vidaUtil: 7 },
-  { item: 'Mobiliario y barra (carpintería simple a medida)', costoCLP: 3_500_000, vidaUtil: 10 },
-  { item: 'POS + lector tarjetas + impresora boletas', costoCLP: 650_000, vidaUtil: 5 },
-  { item: 'Habilitación eléctrica + sanitaria básica (sin cocina)', costoCLP: 2_200_000, vidaUtil: 20 },
-  { item: 'Letrero + diseño marca + branding', costoCLP: 950_000, vidaUtil: 5 },
-  { item: 'Filtro descalcificador agua', costoCLP: 550_000, vidaUtil: 10 },
-  { item: 'Vasos take-away iniciales + tapas + sleeves', costoCLP: 450_000, vidaUtil: 3 },
-  { item: '4 mesas altas + 8 piso (consumo rápido)', costoCLP: 1_500_000, vidaUtil: 7 },
-  { item: 'Permisos iniciales SEREMI + manipuladores + patente', costoCLP: 700_000, vidaUtil: 3 },
-  { item: 'Otros equipos menores + reservas (5%)', costoCLP: 1_200_000, vidaUtil: 5 },
-];
-const CAPEX = INVERSION.reduce((s, i) => s + i.costoCLP, 0);
-const VIDA_PROMEDIO = Math.round(
-  INVERSION.reduce((s, i) => s + i.vidaUtil * i.costoCLP, 0) / CAPEX
-);
-const DEP_ANUAL = CAPEX / VIDA_PROMEDIO;
-
-// ============================================================
-// CÁLCULO POR UBICACIÓN — VAN, TIR, PAYBACK
-// ============================================================
-function calcularUbicacion(u, escenario = 'base') {
-  const combosDia = u['combosDia' + escenario.charAt(0).toUpperCase() + escenario.slice(1)] || u.combosDiaBase;
-  const arriendoMensual = u.arriendoUFm2 * u.m2 * UF;
-  const costosFijosNoLab = arriendoMensual + u.gastosComunesCLP + u.contribucionesMensualCLP + 350_000; // servicios + insumos no var
-  const costoVariableUnitario = 1_100; // alimento envasado pagado al proveedor
-  const costosFijosTotal = costosFijosNoLab + PLANILLA_MENSUAL_TOTAL;
-
-  const diasOperAno = 312;
-  const flujos = [];
-
-  // Capital trabajo: 4 meses de egresos
-  const egresosAnualesAprox = costosFijosTotal * 12 + costoVariableUnitario * combosDia * diasOperAno;
-  const KT = Math.round((egresosAnualesAprox / 12) * 4);
-  const inversionTotal = CAPEX + KT;
-
-  // Año 0: inversión negativa
-  flujos.push(-inversionTotal);
-
-  let creditoFiscal = 0;
-  for (let t = 1; t <= HORIZONTE_ANOS; t += 1) {
-    const factorDemanda = Math.pow(1 + 0.05, t - 1); // crecimiento 5% anual
-    const combosAno = combosDia * diasOperAno * factorDemanda;
-    const ingresos = combosAno * u.ticketPromedio;
-    const cv = combosAno * costoVariableUnitario;
-    const cf = costosFijosTotal * 12;
-    const dep = t <= VIDA_PROMEDIO ? DEP_ANUAL : 0;
-    const uai = ingresos - cv - cf - dep;
-    let imp = 0;
-    if (uai < 0) {
-      creditoFiscal += -uai * TASA_IMPUESTO;
-    } else if (uai > 0) {
-      const teorico = uai * TASA_IMPUESTO;
-      if (creditoFiscal >= teorico) { creditoFiscal -= teorico; imp = 0; }
-      else { imp = teorico - creditoFiscal; creditoFiscal = 0; }
-    }
-    const udi = uai - imp;
-    const fOper = udi + dep;
-
-    let flujoAno = fOper;
-    if (t === HORIZONTE_ANOS) {
-      flujoAno += KT; // recupera CT
-      flujoAno += CAPEX * 0.10 * (1 - TASA_IMPUESTO); // valor residual neto
-      // Valor terminal perpetuidad sobre flujo steady-state
-      const uaiSteady = ingresos - cv - cf;
-      const flujoSteady = uaiSteady > 0 ? uaiSteady * (1 - TASA_IMPUESTO) : uaiSteady;
-      const VT = flujoSteady * (1 + G_PERPETUIDAD) / (TCC - G_PERPETUIDAD);
-      flujoAno += VT;
-    }
-    flujos.push(flujoAno);
-  }
-
-  // VAN
-  const van = flujos.reduce((s, f, i) => s + f / Math.pow(1 + TCC, i), 0);
-  // TIR Newton-Raphson
-  function tir(cf, guess = 0.1) {
-    let r = guess;
-    for (let i = 0; i < 100; i += 1) {
-      let f = 0, df = 0;
-      for (let t = 0; t < cf.length; t += 1) {
-        f += cf[t] / Math.pow(1 + r, t);
-        if (t > 0) df -= (t * cf[t]) / Math.pow(1 + r, t + 1);
-      }
-      if (Math.abs(f) < 1e-6) return r;
-      if (df === 0) break;
-      r = r - f / df;
-      if (r <= -1) r = (r + 1) / 2 - 0.5;
-    }
-    return r;
-  }
-  const tirVal = tir(flujos);
-  // Payback
-  let acc = 0;
-  let payback = Infinity;
-  for (let t = 0; t < flujos.length; t += 1) {
-    const prev = acc;
-    acc += flujos[t];
-    if (prev < 0 && acc >= 0) { payback = (t - 1) + (-prev / flujos[t]); break; }
-  }
-
-  return {
-    arriendoMensual: Math.round(arriendoMensual),
-    costosFijosNoLab: Math.round(costosFijosNoLab),
-    costosFijosTotal: Math.round(costosFijosTotal),
-    capitalTrabajo: KT,
-    inversionTotal,
-    combosDia,
-    flujos: flujos.map(Math.round),
-    van: Math.round(van),
-    tir: tirVal,
-    payback,
-    ingresos1: Math.round(combosDia * diasOperAno * u.ticketPromedio),
-  };
-}
-
-// ============================================================
-// GENERAR EL EXCEL
-// ============================================================
-const wb = XLSX.utils.book_new();
-
-// Helpers de formato
 const moneyFmt = '"$"#,##0;[Red]"$"\\-#,##0';
 const pctFmt = '0.0%';
 const intFmt = '#,##0';
+const ufFmt = '0.000';
 
-function setColWidths(ws, widths) {
-  ws['!cols'] = widths.map((w) => ({ wch: w }));
+function setColWidths(ws, widths) { ws['!cols'] = widths.map((w) => ({ wch: w })); }
+function setRowHeight(ws, idx, h) {
+  ws['!rows'] = ws['!rows'] || [];
+  ws['!rows'][idx] = { hpx: h };
 }
+
+// ============================================================
+// CALCULAR TODAS LAS UBICACIONES (usa modelo central)
+// ============================================================
+const resultados = calcularTodas();
+resultados.sort((a, b) => b.base.van - a.base.van);
+const ganadora = resultados[0];
+
+const wb = XLSX.utils.book_new();
 
 // ============================================================
 // HOJA 1: PORTADA
 // ============================================================
 {
   const data = [
-    [{ v: '☕ ANÁLISIS DE EVALUACIÓN DE PROYECTO', s: { font: { bold: true, sz: 18 } } }],
-    [{ v: 'Café Express · Combo Único Envasado · Región Metropolitana', s: { font: { italic: true, sz: 12 } } }],
+    [{ v: 'ANÁLISIS DE EVALUACIÓN DE PROYECTO', s: { font: { bold: true, sz: 18 } } }],
+    [{ v: 'Café Combo Único Envasado · Región Metropolitana', s: { font: { italic: true, sz: 12 } } }],
     [],
     ['Fecha de elaboración', new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' })],
     ['Curso', 'Evaluación de Proyectos · MBA UAH 2026'],
     ['Profesor', 'Mauricio Zúñiga'],
     [],
-    [{ v: 'RESUMEN EJECUTIVO', s: { font: { bold: true, sz: 14 } } }],
+    [{ v: 'RESULTADO EJECUTIVO', s: { font: { bold: true, sz: 14 } } }],
     [],
-    ['Modelo evaluado', 'Cafetería formato compacto que vende UN combo único (espresso preparado al momento + alimento envasado del proveedor). SIN preparación de alimentos. Categoría sanitaria SEREMI: manipulación mínima.'],
+    ['Ubicación recomendada', ganadora.u.nombre],
+    ['VAN base', ganadora.base.van],
+    ['TIR base', ganadora.base.tir],
+    ['Payback (años)', Number.isFinite(ganadora.base.payback) ? ganadora.base.payback : 'no repaga'],
+    ['Inversión total', ganadora.base.inversionTotal],
+    ['EBITDA año 1', ganadora.base.ebitdaAno1],
+    ['Veredicto', veredicto(ganadora).texto],
+    ['Score de viabilidad (0-100)', scoreUbicacion(ganadora)],
     [],
-    ['Ubicaciones evaluadas', UBICACIONES.length + ' zonas estratégicas RM'],
-    ['Horizonte', HORIZONTE_ANOS + ' años + perpetuidad creciente'],
-    ['Tasa de descuento (Tcc)', TCC, 'Riesgo BAJO modelo simple'],
+    [{ v: 'METODOLOGÍA Y SUPUESTOS CRÍTICOS', s: { font: { bold: true, sz: 12 } } }],
+    [],
+    ['Tasa de descuento (Tcc)', TCC, 'CAPM: Rf 5.5% + β 1.3 × ERP 6.5% — riesgo MEDIO retail food'],
+    ['Crecimiento demanda (g)', G_DEMANDA, 'Sectorial cafetería sin reinversión 2-3% real'],
+    ['Múltiplo EBITDA valor terminal', MULT_EBITDA_TERMINAL, 'Cafés Chile: 3-5x EBITDA — adoptamos 3.5x conservador'],
     ['Régimen tributario', 'Pro PYME 14 D N°3', 'Tasa impuesto: ' + (TASA_IMPUESTO * 100) + '%'],
+    ['Comisión tarjetas', COMISION_TARJETAS, '2.8% sobre ingresos (Transbank/Getnet · 80% pago electrónico)'],
+    ['Horizonte', HORIZONTE_ANOS, 'años + valor terminal por venta del going concern'],
+    ['Días operación', DIAS_OPER_ANO, '6 días/sem × 52 (descansa domingo)'],
     [],
-    [{ v: 'METODOLOGÍA', s: { font: { bold: true, sz: 12 } } }],
+    [{ v: 'AUDITORÍA DEL MODELO PREVIO', s: { font: { bold: true, sz: 12 } } }],
     [],
-    ['1. Investigación primaria', 'Arriendos referenciales por zona en Mercado Libre, Portalinmobiliario, Toctoc, Colliers Chile (sept 2025)'],
-    ['2. Inversión inicial', 'Cotizaciones reales 2024-2025 proveedores HORECA Chile (Princess, Distribuidor Cafetero, Mercado Libre)'],
-    ['3. Costos laborales', 'Sueldos brutos sector hostelería + cargas patronales chilenas (AFC, SIS, Mutual, gratificación 25%, vacaciones, IAS)'],
-    ['4. Demanda', 'Estimación por ubicación cruzando: flujo peatonal, ingreso medio comuna, accesibilidad Metro/paraderos, densidad competencia OSM'],
-    ['5. Modelo financiero', 'Flujo puro mensual a 60 períodos + agregación anual + valor terminal por Gordon Growth (g=2%, Tcc=11.5%) + crédito tributario acumulado caso 1 nueva empresa'],
-    ['6. Sensibilidad', '±20% sobre 6 variables críticas: ticket, demanda, costo insumo, arriendo, sueldos, tasa banco'],
+    ['Antes', 'Ahora', 'Justificación'],
+    ['Costo variable $1.100', 'Variable por zona $1.300-$1.700', 'Combo café+envasado: insumos + empaques + descartables = 40-50% del ticket'],
+    ['Costos fijos $350k/mes', '$850k/mes (sin arriendo)', 'Faltaban: marketing $200k, aseo+pest $100k, software+contador $150k, seguros+mantenciones $150k, servicios $250k'],
+    ['Sin comisión tarjetas', '2.8% sobre ingresos', 'Transbank/Getnet ~3.5% × 80% pago electrónico'],
+    ['g demanda 5% anual', 'g demanda 2.5% anual', 'Crecimiento sectorial cafetería sin re-inversión 2-3%'],
+    ['VT por Gordon Growth (×10.7)', 'VT por múltiplo EBITDA (×3.5)', 'Cafetería independiente NO opera a perpetuidad sin reposición de equipos'],
+    ['Tcc 11.5%', 'Tcc 14%', 'Retail food riesgo MEDIO-ALTO en Chile (alta tasa fracaso 50%+ a 3 años)'],
     [],
     [{ v: 'NAVEGACIÓN POR HOJAS', s: { font: { bold: true, sz: 12 } } }],
     [],
-    ['Inputs', 'Parámetros del modelo (editables, fórmulas vivas)'],
-    ['Ubicaciones', 'Tabla comparativa de las 7 zonas con arriendo, ticket, demanda esperada'],
-    ['Inversion', 'Desglose detallado de inversión inicial por ítem'],
-    ['Costos', 'Estructura de costos fijos + variables mensual'],
-    ['Personal', 'Planilla con leyes sociales chilenas detalladas'],
-    ['Flujo_Mensual', '60 períodos del flujo puro de la ubicación recomendada'],
-    ['FlujoAnual_Puro', '5 años + valor terminal + indicadores VAN/TIR'],
-    ['FlujoAnual_Inv', 'Mismo modelo con financiamiento bancario 40%'],
-    ['Comparativo_VAN', 'VAN/TIR/Payback por ubicación · 3 escenarios'],
-    ['Sensibilidad', 'Tornado ±20% sobre 6 variables'],
+    ['Inputs', 'Parámetros del modelo (constantes y supuestos)'],
+    ['Ubicaciones', 'Tabla con las 7 zonas, características y micro-mercado'],
+    ['Costos', 'Estructura de costos fijos + variables comparada entre zonas'],
+    ['Personal', 'Planilla con cargas patronales chilenas detalladas'],
+    ['Inversion', 'Desglose de inversión inicial por ítem + depreciación'],
+    ['Comparativo_VAN', 'VAN/TIR/Payback comparado por zona y escenario'],
+    ['Flujo_Ganadora', 'Flujo a 5 años de la ubicación recomendada'],
+    ['Sensibilidad', 'Tornado ±20% sobre 6 variables críticas'],
     ['Riesgos', 'Matriz cualitativa probabilidad × impacto'],
     ['Conclusion', 'Recomendación final fundamentada'],
   ];
   const ws = XLSX.utils.aoa_to_sheet(data);
-  setColWidths(ws, [38, 70]);
-  ws['C14'] = { t: 'n', v: TCC, z: pctFmt };
+  setColWidths(ws, [42, 70]);
+  // Aplicar formato a celdas específicas
+  if (ws['B11']) ws['B11'].z = moneyFmt;
+  if (ws['B12']) ws['B12'].z = pctFmt;
+  if (ws['B14']) ws['B14'].z = moneyFmt;
+  if (ws['B15']) ws['B15'].z = moneyFmt;
+  if (ws['B21']) ws['B21'].z = pctFmt;
+  if (ws['B22']) ws['B22'].z = pctFmt;
+  if (ws['B23']) ws['B23'].z = '0.0';
+  if (ws['B25']) ws['B25'].z = pctFmt;
   XLSX.utils.book_append_sheet(wb, ws, 'Portada');
 }
 
 // ============================================================
-// HOJA 2: INPUTS
+// HOJA 2: INPUTS (parámetros del modelo)
 // ============================================================
 {
   const data = [
     ['PARÁMETRO', 'VALOR', 'UNIDAD', 'NOTA'],
     [],
-    ['1. CONSTANTES DE REFERENCIA'],
+    [{ v: '1. CONSTANTES MACRO', s: { font: { bold: true } } }],
     ['UF', UF, 'CLP', 'Promedio 2025'],
     ['IMM (Ingreso Mínimo)', IMM, 'CLP', 'Vigente 2025'],
-    ['Tope gratificación mensual', Math.round(TOPE_GRATIF_MENSUAL), 'CLP', '4.75 IMM / 12'],
     [],
-    ['2. PARÁMETROS FINANCIEROS'],
+    [{ v: '2. PARÁMETROS FINANCIEROS', s: { font: { bold: true } } }],
     ['Horizonte', HORIZONTE_ANOS, 'años'],
-    ['Tcc (tasa costo capital)', TCC, '%', 'Riesgo bajo modelo simple'],
-    ['Crecimiento perpetuidad (g)', G_PERPETUIDAD, '%', 'Coherente con inflación LP'],
+    ['Tcc (tasa costo capital)', TCC, '%', 'CAPM retail food riesgo MEDIO'],
+    ['Crecimiento demanda anual (g)', G_DEMANDA, '%', 'Sectorial cafetería sin reinversión'],
+    ['Múltiplo EBITDA terminal', MULT_EBITDA_TERMINAL, 'x', 'Valor going concern al cierre del horizonte'],
     ['Tasa impuesto', TASA_IMPUESTO, '%', 'Pro PYME 14 D N°3'],
-    ['IVA', TASA_IVA, '%', 'Plantilla aparte (DL 825)'],
+    ['IVA', TASA_IVA, '%', 'DL 825'],
+    ['Comisión tarjetas', COMISION_TARJETAS, '%', '3.5% × 80% pago electrónico'],
     [],
-    ['3. CARGAS PATRONALES (factor sobre bruto)'],
+    [{ v: '3. CARGAS PATRONALES (factor sobre bruto)', s: { font: { bold: true } } }],
     ['AFC empleador (indefinido)', CARGAS.afcEmp, '%'],
     ['SIS', CARGAS.sis, '%', 'Seguro invalidez/sobrevivencia'],
     ['Mutual Ley 16.744', CARGAS.mutual, '%', 'Accidentes del trabajo'],
@@ -399,106 +140,122 @@ function setColWidths(ws, widths) {
     ['Provisión vacaciones', CARGAS.vacac, '%', '15 días hábiles ≈ 1 mes/año'],
     ['Provisión IAS Art. 163', CARGAS.iAS, '%', '1 mes/año (tope 11)'],
     [],
-    ['4. PARÁMETROS OPERACIONALES (todas las ubicaciones)'],
-    ['Días operación / año', 312, 'días', '6 días/sem × 52'],
-    ['Crecimiento demanda anual', 0.05, '%'],
-    ['Costo variable / combo', 1100, 'CLP', 'Alimento envasado proveedor'],
-    ['Servicios + insumos no var', 350_000, 'CLP/mes', 'Luz, gas, agua, internet, café'],
+    [{ v: '4. COSTOS FIJOS NO LABORALES (sin arriendo)', s: { font: { bold: true } } }],
+    ['Servicios básicos (luz/gas/agua/internet)', COSTOS_FIJOS_NO_LAB.serviciosBasicos, 'CLP/mes'],
+    ['Marketing', COSTOS_FIJOS_NO_LAB.marketing, 'CLP/mes', 'SEM, redes, fidelización'],
+    ['Aseo y pest control', COSTOS_FIJOS_NO_LAB.aseoYpest, 'CLP/mes'],
+    ['Software + Contador externo', COSTOS_FIJOS_NO_LAB.softwareYContador, 'CLP/mes', 'POS + facturación + contabilidad'],
+    ['Seguros + provisión mantenciones', COSTOS_FIJOS_NO_LAB.segurosYmantenciones, 'CLP/mes'],
+    ['SUBTOTAL fijos no laborales', COSTOS_FIJOS_NO_LAB_TOTAL, 'CLP/mes', 'Por ubicación se SUMA arriendo + gastos com. + contribuciones'],
+    [],
+    [{ v: '5. PARÁMETROS OPERACIONALES', s: { font: { bold: true } } }],
+    ['Días operación / año', DIAS_OPER_ANO, 'días', '6 días/sem × 52'],
     ['Vida útil promedio activos', VIDA_PROMEDIO, 'años', 'Promedio ponderado por costo'],
+    ['Capital de trabajo', '2,5 meses egresos', '', 'Calculado por ubicación'],
+    ['Valor residual activos al año 5', '10% del CAPEX', '', 'Estimación conservadora venta de equipos'],
+    ['Costo planilla mensual con cargas', PLANILLA_MENSUAL_TOTAL, 'CLP/mes', '3 personas (Barista jefe + tarde + reemplazo ½ jornada)'],
   ];
   const ws = XLSX.utils.aoa_to_sheet(data);
-  setColWidths(ws, [36, 18, 12, 50]);
-  // Formato % a las celdas relevantes
-  ['B10', 'B11', 'B12', 'B13', 'B16', 'B17', 'B18', 'B19', 'B20', 'B21', 'B25'].forEach((c) => {
+  setColWidths(ws, [40, 18, 14, 50]);
+
+  // Formato % a celdas que llevan tasa
+  ['B9', 'B10', 'B12', 'B13', 'B14', 'B17', 'B18', 'B19', 'B20', 'B21', 'B22'].forEach((c) => {
     if (ws[c]) ws[c].z = pctFmt;
   });
-  ['B4', 'B5', 'B6', 'B26'].forEach((c) => { if (ws[c]) ws[c].z = moneyFmt; });
+  // Formato $ a celdas $$
+  ['B4', 'B5', 'B25', 'B26', 'B27', 'B28', 'B29', 'B30', 'B36'].forEach((c) => {
+    if (ws[c]) ws[c].z = moneyFmt;
+  });
   XLSX.utils.book_append_sheet(wb, ws, 'Inputs');
 }
 
 // ============================================================
-// HOJA 3: UBICACIONES (tabla comparativa con cálculos)
+// HOJA 3: UBICACIONES (tabla comparativa)
 // ============================================================
 {
   const data = [
-    ['#', 'Ubicación', 'Comuna', 'Dirección referencia', 'Arriendo UF/m²', 'm² local', 'Arriendo $/mes', 'Gastos Com.', 'Contrib.', 'TOTAL fijo no lab.', 'Flujo peatonal/día', 'Densidad competencia /km²', 'Ingreso medio comuna', 'Distancia Metro (m)', 'Ticket', 'Combos/día base', 'Notas'],
+    ['#', 'Ubicación', 'Comuna', 'Dirección referencia', 'Arriendo UF/m²', 'm² local',
+     'Arriendo $/mes', 'Gastos com.', 'Contrib.', 'Costos fijos no lab. TOTAL',
+     'Flujo peatonal/día', 'Comp./km²', 'Ingreso medio', 'Distancia Metro (m)',
+     'Ticket', 'Costo variable', 'Margen contrib.', 'Combos/día base'],
   ];
-  UBICACIONES.forEach((u, i) => {
-    const r = calcularUbicacion(u);
+  resultados.forEach((r, i) => {
+    const u = r.u;
+    const arriendo = u.arriendoUFm2 * u.m2 * UF;
     data.push([
-      i + 1,
-      u.nombre,
-      u.comuna,
-      u.direccion_referencia,
-      u.arriendoUFm2,
-      u.m2,
-      r.arriendoMensual,
-      u.gastosComunesCLP,
-      u.contribucionesMensualCLP,
-      u.gastosComunesCLP + u.contribucionesMensualCLP + r.arriendoMensual + 350_000,
-      u.flujoPeatonalDia,
-      u.densidadCompetenciaKm2,
-      u.ingresoMedioComuna,
-      u.metrosAEstacionMetro,
-      u.ticketPromedio,
+      i + 1, u.nombre, u.comuna, u.direccion_referencia,
+      u.arriendoUFm2, u.m2, Math.round(arriendo),
+      u.gastosComunesCLP, u.contribucionesMensualCLP,
+      Math.round(arriendo + u.gastosComunesCLP + u.contribucionesMensualCLP + COSTOS_FIJOS_NO_LAB_TOTAL),
+      u.flujoPeatonalDia, u.densidadCompetenciaKm2, u.ingresoMedioComuna,
+      u.metrosAEstacionMetro, u.ticketPromedio, u.costoVariableUnitario,
+      (u.ticketPromedio - u.costoVariableUnitario) / u.ticketPromedio,
       u.combosDiaBase,
-      u.notasZona,
     ]);
   });
   const ws = XLSX.utils.aoa_to_sheet(data);
-  setColWidths(ws, [4, 35, 16, 28, 14, 8, 14, 12, 12, 16, 16, 16, 18, 16, 10, 14, 80]);
-  // formatos
-  for (let r = 2; r <= UBICACIONES.length + 1; r += 1) {
-    ['G', 'H', 'I', 'J', 'M', 'O'].forEach((col) => {
-      const cell = ws[col + r];
-      if (cell) cell.z = moneyFmt;
+  setColWidths(ws, [4, 36, 16, 28, 12, 8, 14, 12, 12, 18, 14, 11, 14, 14, 10, 12, 12, 12]);
+  for (let r = 2; r <= resultados.length + 1; r += 1) {
+    ['G', 'H', 'I', 'J', 'M', 'O', 'P'].forEach((c) => {
+      if (ws[c + r]) ws[c + r].z = moneyFmt;
     });
-    ['E'].forEach((col) => {
-      const cell = ws[col + r];
-      if (cell) cell.z = '0.000';
-    });
-    ['F', 'K', 'L', 'N', 'P'].forEach((col) => {
-      const cell = ws[col + r];
-      if (cell) cell.z = intFmt;
+    if (ws['E' + r]) ws['E' + r].z = ufFmt;
+    if (ws['Q' + r]) ws['Q' + r].z = pctFmt;
+    ['F', 'K', 'L', 'N', 'R'].forEach((c) => {
+      if (ws[c + r]) ws[c + r].z = intFmt;
     });
   }
   XLSX.utils.book_append_sheet(wb, ws, 'Ubicaciones');
 }
 
 // ============================================================
-// HOJA 4: INVERSIÓN INICIAL
+// HOJA 4: COSTOS (mensual por ubicación)
 // ============================================================
 {
-  const data = [
-    ['#', 'Ítem', 'Costo CLP', 'Vida útil SII (años)', 'Cuota anual depreciación'],
-  ];
-  INVERSION.forEach((it, i) => {
-    data.push([i + 1, it.item, it.costoCLP, it.vidaUtil, it.costoCLP / it.vidaUtil]);
-  });
+  const cols = ['Concepto', ...resultados.map((r) => r.u.nombre.split('·')[0].trim())];
+  const data = [cols];
+  function row(label, vals) { data.push([label, ...vals]); }
+
+  row('Arriendo UF/m²/mes', resultados.map((r) => r.u.arriendoUFm2));
+  row('Arriendo $/mes', resultados.map((r) => r.u.arriendoUFm2 * r.u.m2 * UF));
+  row('Gastos comunes', resultados.map((r) => r.u.gastosComunesCLP));
+  row('Contribuciones', resultados.map((r) => r.u.contribucionesMensualCLP));
+  row('Servicios básicos', resultados.map(() => COSTOS_FIJOS_NO_LAB.serviciosBasicos));
+  row('Marketing', resultados.map(() => COSTOS_FIJOS_NO_LAB.marketing));
+  row('Aseo + pest', resultados.map(() => COSTOS_FIJOS_NO_LAB.aseoYpest));
+  row('Software + Contador', resultados.map(() => COSTOS_FIJOS_NO_LAB.softwareYContador));
+  row('Seguros + mantenciones', resultados.map(() => COSTOS_FIJOS_NO_LAB.segurosYmantenciones));
+  row('SUBTOTAL fijos no laborales', resultados.map((r) => Math.round(r.base.costosFijosNoLab)));
   data.push([]);
-  data.push(['', 'TOTAL INVERSIÓN ACTIVOS', CAPEX, VIDA_PROMEDIO, DEP_ANUAL]);
+  row('Costo planilla mensual (3 personas con cargas)', resultados.map(() => Math.round(PLANILLA_MENSUAL_TOTAL)));
   data.push([]);
-  data.push(['', 'Capital de trabajo (4 meses egresos típicos)', '— calculado por ubicación']);
-  data.push(['', 'Permisos iniciales adicionales', 700_000, '', '']);
+  row('TOTAL COSTOS FIJOS / MES', resultados.map((r) => Math.round(r.base.costosFijosTotal)));
+  row('TOTAL COSTOS FIJOS / AÑO', resultados.map((r) => Math.round(r.base.costosFijosTotal * 12)));
   data.push([]);
-  data.push(['Notas:']);
-  data.push(['Vida útil ponderada por costo:', VIDA_PROMEDIO, 'años']);
-  data.push(['Depreciación lineal (SLN):', '=B' + (INVERSION.length + 4) + '/D' + (INVERSION.length + 4)]);
-  data.push(['Valor residual estimado año ' + HORIZONTE_ANOS + ':', CAPEX * 0.10, 'CLP (10% del capex)']);
+  row('Costo variable por combo', resultados.map((r) => r.u.costoVariableUnitario));
+  row('Ingresos anuales caso base', resultados.map((r) => r.base.ingresosAno1));
+  row('Costos variables anuales caso base', resultados.map((r) => r.u.combosDiaBase * r.u.costoVariableUnitario * DIAS_OPER_ANO));
+  row('Comisión tarjetas (2.8%)', resultados.map((r) => r.base.ingresosAno1 * COMISION_TARJETAS));
+  row('Margen contribución / combo', resultados.map((r) => r.u.ticketPromedio - r.u.costoVariableUnitario));
+  row('Margen contribución %', resultados.map((r) => (r.u.ticketPromedio - r.u.costoVariableUnitario) / r.u.ticketPromedio));
+  row('EBITDA año 1', resultados.map((r) => r.base.ebitdaAno1));
 
   const ws = XLSX.utils.aoa_to_sheet(data);
-  setColWidths(ws, [4, 56, 18, 10, 22]);
-  for (let r = 2; r <= INVERSION.length + 5; r += 1) {
-    if (ws['C' + r]) ws['C' + r].z = moneyFmt;
-    if (ws['E' + r]) ws['E' + r].z = moneyFmt;
+  setColWidths(ws, [42, ...resultados.map(() => 18)]);
+
+  // Formatos
+  for (let r = 2; r <= data.length; r += 1) {
+    resultados.forEach((_, idx) => {
+      const col = String.fromCharCode(66 + idx);
+      const cell = ws[col + r];
+      if (!cell) return;
+      const label = data[r - 1][0];
+      if (label === 'Arriendo UF/m²/mes') cell.z = ufFmt;
+      else if (label === 'Margen contribución %') cell.z = pctFmt;
+      else cell.z = moneyFmt;
+    });
   }
-  // Highlight total row
-  const totalRow = INVERSION.length + 3;
-  ['B', 'C', 'D', 'E'].forEach((col) => {
-    const cell = ws[col + totalRow];
-    if (cell) cell.s = { font: { bold: true } };
-  });
-  XLSX.utils.book_append_sheet(wb, ws, 'Inversion');
+  XLSX.utils.book_append_sheet(wb, ws, 'Costos');
 }
 
 // ============================================================
@@ -506,14 +263,15 @@ function setColWidths(ws, widths) {
 // ============================================================
 {
   const data = [
-    ['#', 'Cargo', 'Cant.', 'Bruto/mes', 'AFC emp 2.4%', 'SIS 1.85%', 'Mutual 0.95%', 'Gratific.', 'Prov. vacac 8.33%', 'Prov. IAS 8.33%', 'Costo/mes/persona', 'Costo total/mes', 'Costo anual', 'Factor x'],
+    ['#', 'Cargo', 'Cant.', 'Bruto/mes', 'AFC emp 2.4%', 'SIS 1.85%', 'Mutual 0.95%',
+     'Gratific.', 'Prov. vacac 8.33%', 'Prov. IAS 8.33%', 'Costo/mes/persona', 'Costo total/mes', 'Costo anual', 'Factor x'],
   ];
   PLANILLA.forEach((p, i) => {
     const bruto = p.brutoMensual;
     const afc = bruto * CARGAS.afcEmp;
     const sis = bruto * CARGAS.sis;
     const mut = bruto * CARGAS.mutual;
-    const gratif = Math.min(bruto * CARGAS.gratif, TOPE_GRATIF_MENSUAL);
+    const gratif = Math.min(bruto * CARGAS.gratif, IMM * 4.75 / 12);
     const vac = bruto * CARGAS.vacac;
     const ias = bruto * CARGAS.iAS;
     const total = bruto + afc + sis + mut + gratif + vac + ias;
@@ -531,14 +289,14 @@ function setColWidths(ws, widths) {
   data.push(['SIS (Seguro Invalidez/Sobrev.)', '1.85% — paga el empleador desde 2009 (Ley 20.255)']);
   data.push(['Mutual Ley 16.744', '0.95% base + adicional según riesgo', 'ACHS / Mutual / IST']);
   data.push(['Gratificación Art. 50 CT', '25% bruto con tope 4.75 IMM = ' + Math.round(IMM * 4.75).toLocaleString('es-CL') + ' anual por trabajador']);
-  data.push(['Provisión IAS Art. 163 CT', '1 mes/año tope 11', 'Solo se paga al desvincular si causal lo amerita']);
-  data.push(['Provisión vacaciones', '15 días hábiles ≈ 1 mes/año', 'Acumulación legal']);
+  data.push(['Provisión IAS Art. 163 CT', '1 mes/año tope 11 (al desvincular si causal lo amerita)']);
+  data.push(['Provisión vacaciones', '15 días hábiles ≈ 1 mes/año']);
 
   const ws = XLSX.utils.aoa_to_sheet(data);
   setColWidths(ws, [4, 38, 6, 14, 12, 12, 12, 12, 14, 14, 18, 16, 16, 8]);
   for (let r = 2; r <= PLANILLA.length + 4; r += 1) {
-    ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'].forEach((col) => {
-      if (ws[col + r]) ws[col + r].z = moneyFmt;
+    ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'].forEach((c) => {
+      if (ws[c + r]) ws[c + r].z = moneyFmt;
     });
     if (ws['N' + r]) ws['N' + r].z = '0.00';
   }
@@ -546,188 +304,131 @@ function setColWidths(ws, widths) {
 }
 
 // ============================================================
-// HOJA 6: COSTOS (estructura mensual por ubicación)
+// HOJA 6: INVERSIÓN INICIAL
 // ============================================================
 {
   const data = [
-    ['Concepto', ...UBICACIONES.map((u) => u.nombre.split('·')[0].trim())],
+    ['#', 'Ítem', 'Costo CLP', 'Vida útil SII (años)', 'Cuota anual depreciación'],
   ];
-  // Arriendos
-  data.push(['Arriendo (UF/m²/mes)', ...UBICACIONES.map((u) => u.arriendoUFm2)]);
-  data.push(['Arriendo CLP/mes', ...UBICACIONES.map((u) => u.arriendoUFm2 * u.m2 * UF)]);
-  data.push(['Gastos comunes', ...UBICACIONES.map((u) => u.gastosComunesCLP)]);
-  data.push(['Contribuciones', ...UBICACIONES.map((u) => u.contribucionesMensualCLP)]);
-  data.push(['Servicios + insumos no var', ...UBICACIONES.map(() => 350_000)]);
-  data.push(['SUBTOTAL fijos no laborales', ...UBICACIONES.map((u) =>
-    u.arriendoUFm2 * u.m2 * UF + u.gastosComunesCLP + u.contribucionesMensualCLP + 350_000
-  )]);
+  INVERSION.forEach((it, i) => {
+    data.push([i + 1, it.item, it.costoCLP, it.vidaUtil, it.costoCLP / it.vidaUtil]);
+  });
   data.push([]);
-  data.push(['Costo planilla mensual (3 personas con cargas)', ...UBICACIONES.map(() => Math.round(PLANILLA_MENSUAL_TOTAL))]);
+  data.push(['', 'TOTAL CAPEX (activos físicos)', CAPEX, VIDA_PROMEDIO, DEP_ANUAL]);
   data.push([]);
-  data.push(['TOTAL COSTOS FIJOS / MES', ...UBICACIONES.map((u) =>
-    Math.round(u.arriendoUFm2 * u.m2 * UF + u.gastosComunesCLP + u.contribucionesMensualCLP + 350_000 + PLANILLA_MENSUAL_TOTAL)
-  )]);
-  data.push(['TOTAL COSTOS FIJOS / AÑO', ...UBICACIONES.map((u) =>
-    Math.round((u.arriendoUFm2 * u.m2 * UF + u.gastosComunesCLP + u.contribucionesMensualCLP + 350_000 + PLANILLA_MENSUAL_TOTAL) * 12)
-  )]);
-  data.push([]);
-  data.push(['Costo variable por combo', ...UBICACIONES.map(() => 1100)]);
-  data.push(['Ingresos anuales caso base', ...UBICACIONES.map((u) => u.combosDiaBase * u.ticketPromedio * 312)]);
-  data.push(['Costos variables anuales caso base', ...UBICACIONES.map((u) => u.combosDiaBase * 1100 * 312)]);
-  data.push(['Margen contribución / combo', ...UBICACIONES.map((u) => u.ticketPromedio - 1100)]);
-  data.push(['Margen contribución %', ...UBICACIONES.map((u) => (u.ticketPromedio - 1100) / u.ticketPromedio)]);
+  data.push(['Notas:']);
+  data.push(['Vida útil ponderada por costo:', VIDA_PROMEDIO, 'años']);
+  data.push(['Depreciación lineal anual (SLN):', DEP_ANUAL]);
+  data.push(['Valor residual estimado año ' + HORIZONTE_ANOS + ':', CAPEX * 0.10, 'CLP (10% del CAPEX)']);
+  data.push(['Capital trabajo: 2.5 meses egresos típicos · varía por ubicación']);
 
   const ws = XLSX.utils.aoa_to_sheet(data);
-  setColWidths(ws, [42, ...UBICACIONES.map(() => 18)]);
-  for (let r = 2; r <= 18; r += 1) {
-    UBICACIONES.forEach((_, idx) => {
-      const col = String.fromCharCode(66 + idx);
-      const cell = ws[col + r];
-      if (!cell) return;
-      if (r === 18) cell.z = pctFmt;
-      else if (r === 2) cell.z = '0.000';
-      else cell.z = moneyFmt;
-    });
+  setColWidths(ws, [4, 56, 18, 10, 22]);
+  for (let r = 2; r <= INVERSION.length + 5; r += 1) {
+    if (ws['C' + r]) ws['C' + r].z = moneyFmt;
+    if (ws['E' + r]) ws['E' + r].z = moneyFmt;
   }
-  XLSX.utils.book_append_sheet(wb, ws, 'Costos');
+  XLSX.utils.book_append_sheet(wb, ws, 'Inversion');
 }
 
 // ============================================================
-// HOJA 7: COMPARATIVO VAN POR UBICACIÓN
+// HOJA 7: COMPARATIVO VAN POR UBICACIÓN (con score y veredicto)
 // ============================================================
 {
   const data = [
-    ['#', 'Ubicación', 'Comuna', 'Inversión total', 'Combos/día base', 'VAN base', 'TIR base', 'Payback (años)', 'VAN pesimista', 'VAN optimista', 'Veredicto'],
+    ['#', 'Ubicación', 'Comuna', 'Combos/día', 'Inv. total', 'EBITDA año 1',
+     'VAN base', 'VAN pesim.', 'VAN optim.', 'TIR base', 'Payback (años)',
+     'Score 0-100', 'Veredicto'],
   ];
-  const resultados = UBICACIONES.map((u) => {
-    const base = calcularUbicacion(u, 'base');
-    const pes = calcularUbicacion(u, 'pesimista');
-    const opt = calcularUbicacion(u, 'optimista');
-    return { u, base, pes, opt };
-  });
-
-  // Ordenar por VAN base desc
-  resultados.sort((a, b) => b.base.van - a.base.van);
-
-  resultados.forEach(({ u, base, pes, opt }, i) => {
-    const veredicto = base.van > 0 && pes.van > -inversionTotal(u) * 0.5
-      ? '✅ Recomendado'
-      : base.van > 0
-      ? '⚠️ Aceptable con riesgo'
-      : '❌ No conviene';
+  resultados.forEach((r, i) => {
+    const v = veredicto(r);
     data.push([
-      i + 1, u.nombre, u.comuna,
-      base.inversionTotal, base.combosDia,
-      base.van, base.tir, base.payback === Infinity ? '> 5' : Math.round(base.payback * 100) / 100,
-      pes.van, opt.van, veredicto,
+      i + 1, r.u.nombre, r.u.comuna, r.base.combosDia,
+      r.base.inversionTotal, r.base.ebitdaAno1,
+      r.base.van, r.pes.van, r.opt.van,
+      Number.isFinite(r.base.tir) ? r.base.tir : null,
+      Number.isFinite(r.base.payback) && r.base.payback > 0 && r.base.payback <= HORIZONTE_ANOS
+        ? Math.round(r.base.payback * 100) / 100
+        : '> 5',
+      scoreUbicacion(r),
+      v.texto,
     ]);
   });
-
-  function inversionTotal(u) {
-    const ar = u.arriendoUFm2 * u.m2 * UF;
-    const cFijo = ar + u.gastosComunesCLP + u.contribucionesMensualCLP + 350_000 + PLANILLA_MENSUAL_TOTAL;
-    const KT = Math.round((cFijo * 12 + u.combosDiaBase * 312 * 1100) / 12 * 4);
-    return CAPEX + KT;
-  }
-
   const ws = XLSX.utils.aoa_to_sheet(data);
-  setColWidths(ws, [4, 36, 16, 18, 14, 18, 12, 14, 18, 18, 26]);
+  setColWidths(ws, [4, 36, 16, 12, 16, 16, 16, 16, 16, 12, 14, 11, 22]);
   for (let r = 2; r <= resultados.length + 1; r += 1) {
-    ['D', 'F', 'I', 'J'].forEach((c) => { if (ws[c + r]) ws[c + r].z = moneyFmt; });
-    if (ws['G' + r]) ws['G' + r].z = pctFmt;
+    ['E', 'F', 'G', 'H', 'I'].forEach((c) => { if (ws[c + r]) ws[c + r].z = moneyFmt; });
+    if (ws['J' + r]) ws['J' + r].z = pctFmt;
   }
   XLSX.utils.book_append_sheet(wb, ws, 'Comparativo_VAN');
-
-  // Guardamos los resultados para usar en otras hojas
-  globalThis.__resultados = resultados;
 }
 
 // ============================================================
-// HOJA 8: FLUJO ANUAL — UBICACIÓN GANADORA
+// HOJA 8: FLUJO ANUAL — UBICACIÓN GANADORA (modelo corregido)
 // ============================================================
 {
-  const ganadora = globalThis.__resultados[0];
-  const u = ganadora.u;
   const r = ganadora.base;
-  const arriendoMensual = u.arriendoUFm2 * u.m2 * UF;
-  const cf = arriendoMensual + u.gastosComunesCLP + u.contribucionesMensualCLP + 350_000 + PLANILLA_MENSUAL_TOTAL;
-  const cv = 1100;
-  const dias = 312;
-
+  const u = ganadora.u;
   const data = [
-    ['FLUJO DE CAJA PURO · UBICACIÓN GANADORA: ' + u.nombre],
-    ['(VAN ' + r.van.toLocaleString('es-CL') + ' · TIR ' + (r.tir * 100).toFixed(1) + '%)'],
+    [{ v: 'FLUJO DE CAJA PURO · ' + u.nombre.toUpperCase(), s: { font: { bold: true, sz: 14 } } }],
+    [`VAN ${r.van.toLocaleString('es-CL')}  ·  TIR ${(r.tir * 100).toFixed(1)}%  ·  Payback ${Number.isFinite(r.payback) ? r.payback.toFixed(2) + ' años' : '> 5 años'}`],
     [],
     ['Concepto', 'Año 0', 'Año 1', 'Año 2', 'Año 3', 'Año 4', 'Año 5'],
   ];
-
-  const filas = ['Combos/año', 'Ingresos', '(-) Costos variables', '(-) Costos fijos', '(-) Depreciación', 'UAI', '(-) Impuesto', 'UDI', '(+) Reversión depreciación', '(+) Recupero CT', '(+) Valor residual neto', '(+) Valor terminal (perpetuidad)', '(-) Inversión inicial', '(-) Capital trabajo', 'FLUJO NETO DE CAJA'];
-
-  // Construir matriz
-  let matriz = filas.map(() => ['', 0, 0, 0, 0, 0, 0]);
-  let creditoFiscal = 0;
-  for (let t = 0; t <= HORIZONTE_ANOS; t += 1) {
-    if (t === 0) {
-      matriz[12][1] = -CAPEX; // inv
-      matriz[13][1] = -r.capitalTrabajo;
-      matriz[14][1] = -CAPEX - r.capitalTrabajo;
-      continue;
+  // Construir matriz a partir del detalle anual del modelo
+  const labels = [
+    'Combos/año', 'Ingresos', '(-) Costos variables', '(-) Costos fijos',
+    '(-) Comisión tarjetas (2.8%)', 'EBITDA', '(-) Depreciación', 'EBIT (UAI)',
+    '(-) Impuesto', 'Utilidad neta', '(+) Reversión depreciación', 'Flujo operacional',
+    '(+) Recupero CT', '(+) Valor residual neto', '(+) Valor terminal (3.5x EBITDA)',
+    '(-) Inversión inicial', '(-) Capital de trabajo',
+    'FLUJO NETO DE CAJA',
+  ];
+  const matriz = labels.map(() => ['', '', '', '', '', '', '']);
+  // Año 0
+  matriz[15][1] = -CAPEX;
+  matriz[16][1] = -r.capitalTrabajo;
+  matriz[17][1] = -CAPEX - r.capitalTrabajo;
+  // Años 1-5 desde detalleAnual
+  r.detalleAnual.slice(1).forEach((d, idx) => {
+    const col = idx + 2; // año 1 va en columna 2
+    matriz[0][col] = Math.round(d.combos);
+    matriz[1][col] = d.ingresos;
+    matriz[2][col] = -d.cv;
+    matriz[3][col] = -d.cf;
+    matriz[4][col] = -d.comisiones;
+    matriz[5][col] = d.ebitda;
+    matriz[6][col] = -d.depreciacion;
+    matriz[7][col] = d.ebit;
+    matriz[8][col] = -d.impuesto;
+    matriz[9][col] = d.utilidadNeta;
+    matriz[10][col] = d.depreciacion;
+    matriz[11][col] = d.flujoOper;
+    if (d.ano === HORIZONTE_ANOS) {
+      matriz[12][col] = d.recuperoKT;
+      matriz[13][col] = d.valorResidual;
+      matriz[14][col] = d.valorTerminal;
     }
-    const factor = Math.pow(1 + 0.05, t - 1);
-    const combos = u.combosDiaBase * dias * factor;
-    const ing = combos * u.ticketPromedio;
-    const cvAno = combos * cv;
-    const cfAno = cf * 12;
-    const dep = t <= VIDA_PROMEDIO ? DEP_ANUAL : 0;
-    const uai = ing - cvAno - cfAno - dep;
-    let imp = 0;
-    if (uai < 0) creditoFiscal += -uai * TASA_IMPUESTO;
-    else if (uai > 0) {
-      const teor = uai * TASA_IMPUESTO;
-      if (creditoFiscal >= teor) { creditoFiscal -= teor; imp = 0; }
-      else { imp = teor - creditoFiscal; creditoFiscal = 0; }
-    }
-    const udi = uai - imp;
-    const fOper = udi + dep;
-    matriz[0][t + 1] = combos;
-    matriz[1][t + 1] = ing;
-    matriz[2][t + 1] = -cvAno;
-    matriz[3][t + 1] = -cfAno;
-    matriz[4][t + 1] = -dep;
-    matriz[5][t + 1] = uai;
-    matriz[6][t + 1] = -imp;
-    matriz[7][t + 1] = udi;
-    matriz[8][t + 1] = dep;
-    if (t === HORIZONTE_ANOS) {
-      matriz[9][t + 1] = r.capitalTrabajo;
-      const VRneto = CAPEX * 0.10 * (1 - TASA_IMPUESTO);
-      matriz[10][t + 1] = VRneto;
-      const uaiSteady = ing - cvAno - cfAno;
-      const flujoSteady = uaiSteady > 0 ? uaiSteady * (1 - TASA_IMPUESTO) : uaiSteady;
-      const VT = flujoSteady * (1 + G_PERPETUIDAD) / (TCC - G_PERPETUIDAD);
-      matriz[11][t + 1] = VT;
-      matriz[14][t + 1] = fOper + r.capitalTrabajo + VRneto + VT;
-    } else {
-      matriz[14][t + 1] = fOper;
-    }
-  }
-  filas.forEach((nombre, i) => {
-    matriz[i][0] = nombre;
+    matriz[17][col] = d.flujoNeto;
+  });
+  labels.forEach((label, i) => {
+    matriz[i][0] = label;
     data.push(matriz[i]);
   });
-
   data.push([]);
-  data.push(['INDICADORES']);
+  data.push([{ v: 'INDICADORES', s: { font: { bold: true } } }]);
   data.push(['VAN', r.van]);
   data.push(['TIR', r.tir]);
-  data.push(['Payback (años)', r.payback === Infinity ? '> 5' : Math.round(r.payback * 100) / 100]);
+  data.push(['Payback (años)', Number.isFinite(r.payback) ? r.payback : '> 5']);
   data.push(['Tasa de descuento (Tcc)', TCC]);
-  data.push(['Crecimiento perpetuidad (g)', G_PERPETUIDAD]);
+  data.push(['Crecimiento demanda (g)', G_DEMANDA]);
+  data.push(['Múltiplo EBITDA terminal', MULT_EBITDA_TERMINAL]);
 
   const ws = XLSX.utils.aoa_to_sheet(data);
-  setColWidths(ws, [38, 16, 16, 16, 16, 16, 16]);
-  // formatos $ a las celdas numéricas
-  for (let r2 = 5; r2 <= 19; r2 += 1) {
+  setColWidths(ws, [38, 15, 15, 15, 15, 15, 15]);
+
+  // Formato numérico
+  for (let r2 = 5; r2 <= 22; r2 += 1) {
     ['B', 'C', 'D', 'E', 'F', 'G'].forEach((c) => {
       const cell = ws[c + r2];
       if (cell && typeof cell.v === 'number') {
@@ -736,108 +437,89 @@ function setColWidths(ws, widths) {
       }
     });
   }
-  // resaltar fila Flujo Neto
-  ['A', 'B', 'C', 'D', 'E', 'F', 'G'].forEach((c) => {
-    const cell = ws[c + 19];
-    if (cell) cell.s = { font: { bold: true } };
+  // Resaltar EBITDA, Flujo operacional y Flujo neto
+  [10, 16, 22].forEach((rowIdx) => {
+    ['A', 'B', 'C', 'D', 'E', 'F', 'G'].forEach((c) => {
+      const cell = ws[c + rowIdx];
+      if (cell) cell.s = { font: { bold: true } };
+    });
   });
-  // VAN/TIR fila
-  if (ws['B22']) ws['B22'].z = moneyFmt;
-  if (ws['B23']) ws['B23'].z = pctFmt;
-  if (ws['B25']) ws['B25'].z = pctFmt;
+  // VAN/TIR fila inferior
+  if (ws['B25']) ws['B25'].z = moneyFmt;
   if (ws['B26']) ws['B26'].z = pctFmt;
-  XLSX.utils.book_append_sheet(wb, ws, 'FlujoAnual_Ganadora');
+  if (ws['B28']) ws['B28'].z = pctFmt;
+  if (ws['B29']) ws['B29'].z = pctFmt;
+  if (ws['B30']) ws['B30'].z = '0.0';
+  XLSX.utils.book_append_sheet(wb, ws, 'Flujo_Ganadora');
 }
 
 // ============================================================
 // HOJA 9: SENSIBILIDAD (de la ubicación ganadora)
 // ============================================================
 {
-  const ganadora = globalThis.__resultados[0];
   const variables = [
-    { nombre: 'Ticket promedio', clave: 'ticketPromedio' },
-    { nombre: 'Demanda (combos/día)', clave: 'combosDiaBase' },
-    { nombre: 'Costo variable insumo', clave: 'costoVariable' },
-    { nombre: 'Arriendo', clave: 'arriendoUFm2' },
-    { nombre: 'Sueldo planilla', clave: 'sueldos' },
-    { nombre: 'Tasa banco PYME', clave: 'tasaBanco' },
+    { nombre: 'Ticket promedio', clave: 'ticket', factor: (u, d) => ({ ...u, ticketPromedio: u.ticketPromedio * (1 + d) }) },
+    { nombre: 'Demanda (combos/día)', clave: 'demanda', factor: (u, d) => ({ ...u, combosDiaBase: u.combosDiaBase * (1 + d) }) },
+    { nombre: 'Costo variable insumo', clave: 'cv', factor: (u, d) => ({ ...u, costoVariableUnitario: u.costoVariableUnitario * (1 + d) }) },
+    { nombre: 'Arriendo UF/m²', clave: 'arr', factor: (u, d) => ({ ...u, arriendoUFm2: u.arriendoUFm2 * (1 + d) }) },
+    { nombre: 'Sueldos planilla', clave: 'sue', factor: (u, d) => ({ ...u, _sueldoFactor: 1 + d }) },
   ];
   const deltas = [-0.20, -0.10, 0.10, 0.20];
+  const baseVan = ganadora.base.van;
   const data = [
-    ['ANÁLISIS DE SENSIBILIDAD · ' + ganadora.u.nombre],
+    [{ v: 'ANÁLISIS DE SENSIBILIDAD · ' + ganadora.u.nombre, s: { font: { bold: true, sz: 12 } } }],
+    [`VAN base: $${baseVan.toLocaleString('es-CL')}`],
     [],
     ['Variable', '−20%', '−10%', 'Base', '+10%', '+20%'],
   ];
-  const baseVan = ganadora.base.van;
-  const dias = 312;
 
   variables.forEach((v) => {
     const fila = [v.nombre];
     deltas.forEach((d) => {
-      // Re-calcular VAN modificando la variable
-      const u2 = { ...ganadora.u };
-      let cv = 1100;
-      let pl = PLANILLA_MENSUAL_TOTAL;
-      let arrFactor = 1;
-      if (v.clave === 'ticketPromedio') u2.ticketPromedio = u2.ticketPromedio * (1 + d);
-      else if (v.clave === 'combosDiaBase') u2.combosDiaBase = u2.combosDiaBase * (1 + d);
-      else if (v.clave === 'costoVariable') cv = cv * (1 + d);
-      else if (v.clave === 'arriendoUFm2') arrFactor = (1 + d);
-      else if (v.clave === 'sueldos') pl = pl * (1 + d);
-      // (tasa banco no aplica al flujo puro, lo dejamos en 0 para tornado puro)
-      // Recalculamos
-      const arriendoMes = u2.arriendoUFm2 * u2.m2 * UF * arrFactor;
-      const cfMes = arriendoMes + u2.gastosComunesCLP + u2.contribucionesMensualCLP + 350_000 + pl;
-      const cfAnual = cfMes * 12;
-      let cuts = [-(CAPEX + Math.round(cfMes * 4 + u2.combosDiaBase * cv * dias / 12 * 4))];
-      let cred = 0;
-      const KT = Math.abs(cuts[0]) - CAPEX;
-      for (let t = 1; t <= HORIZONTE_ANOS; t += 1) {
-        const factor = Math.pow(1.05, t - 1);
-        const combos = u2.combosDiaBase * dias * factor;
-        const ing = combos * u2.ticketPromedio;
-        const cvAno = combos * cv;
-        const dep = t <= VIDA_PROMEDIO ? DEP_ANUAL : 0;
-        const uai = ing - cvAno - cfAnual - dep;
-        let imp = 0;
-        if (uai < 0) cred += -uai * TASA_IMPUESTO;
-        else if (uai > 0) { const t1 = uai * TASA_IMPUESTO; if (cred >= t1) { cred -= t1; imp = 0; } else { imp = t1 - cred; cred = 0; } }
-        const udi = uai - imp;
-        let f = udi + dep;
-        if (t === HORIZONTE_ANOS) {
-          f += KT + CAPEX * 0.10 * (1 - TASA_IMPUESTO);
-          const uaiS = ing - cvAno - cfAnual;
-          const fS = uaiS > 0 ? uaiS * (1 - TASA_IMPUESTO) : uaiS;
-          f += fS * (1 + G_PERPETUIDAD) / (TCC - G_PERPETUIDAD);
-        }
-        cuts.push(f);
+      const u2 = v.factor(ganadora.u, d);
+      // Si factorial sueldos: workaround — uso nuestro modelo base pero ajustando temporalmente
+      // Para mantener simpleza, recalculamos pasando una función parche
+      const res = calcularUbicacion(u2, 'base');
+      // Si era sueldos, ajustar manualmente la planilla en el cálculo
+      let vanAjustado = res.van;
+      if (v.clave === 'sue') {
+        // Aproximación: planilla anual delta × (1 - tasa) descontado
+        const deltaPlanilla = PLANILLA_MENSUAL_TOTAL * d * 12;
+        // Impacto VAN ≈ -deltaPlanilla × (1 - 0.25) × Σ 1/(1+Tcc)^t
+        const factor = (1 - Math.pow(1 + TCC, -HORIZONTE_ANOS)) / TCC;
+        vanAjustado = baseVan - deltaPlanilla * (1 - TASA_IMPUESTO) * factor;
       }
-      const v2 = cuts.reduce((s, fl, i) => s + fl / Math.pow(1 + TCC, i), 0);
-      fila.push(Math.round(v2));
+      fila.push(Math.round(vanAjustado));
     });
     fila.splice(3, 0, baseVan);
     data.push(fila);
   });
 
   data.push([]);
-  data.push(['Impacto absoluto en VAN (variación − base)']);
+  data.push([{ v: 'IMPACTO EN VAN (variación − base) — ordenado por sensibilidad', s: { font: { bold: true } } }]);
   data.push(['Variable', '−20%', '−10%', 'Base', '+10%', '+20%']);
-  for (let i = 0; i < variables.length; i += 1) {
-    const filaImpacto = [variables[i].nombre];
+  // Recalcular impacto
+  const impactos = variables.map((v, idx) => {
+    const fila = data[4 + idx]; // data row con valores
+    const impacto20 = (fila[1] - baseVan); // peor caso
+    return { nombre: v.nombre, impacto: Math.abs(impacto20), fila };
+  });
+  impactos.sort((a, b) => b.impacto - a.impacto);
+  impactos.forEach((imp) => {
+    const filaImpacto = [imp.nombre];
     for (let j = 1; j <= 5; j += 1) {
-      const v = data[3 + i][j];
+      const v = imp.fila[j];
       filaImpacto.push(typeof v === 'number' ? v - baseVan : '');
     }
     data.push(filaImpacto);
-  }
+  });
 
   const ws = XLSX.utils.aoa_to_sheet(data);
   setColWidths(ws, [28, 18, 18, 18, 18, 18]);
-  // formato $
-  for (let r = 4; r <= 9; r += 1) {
+  for (let r = 5; r <= 9; r += 1) {
     ['B', 'C', 'D', 'E', 'F'].forEach((c) => { if (ws[c + r]) ws[c + r].z = moneyFmt; });
   }
-  for (let r = 13; r <= 18; r += 1) {
+  for (let r = 13; r <= 17; r += 1) {
     ['B', 'C', 'D', 'E', 'F'].forEach((c) => { if (ws[c + r]) ws[c + r].z = moneyFmt; });
   }
   XLSX.utils.book_append_sheet(wb, ws, 'Sensibilidad');
@@ -848,14 +530,14 @@ function setColWidths(ws, widths) {
 // ============================================================
 {
   const data = [
-    ['MATRIZ DE RIESGOS DEL PROYECTO'],
+    [{ v: 'MATRIZ DE RIESGOS DEL PROYECTO', s: { font: { bold: true, sz: 14 } } }],
     [],
     ['#', 'Riesgo', 'Categoría', 'Probabilidad', 'Impacto', 'Score', 'Mitigación', 'Responsable'],
     [1, 'Caída de demanda por contracción económica', 'Mercado', 'Media', 'Alto', 'Alto', 'Diversificar canal (delivery, oficinas), revisar mix combo, ajustar estacionalidad', 'Gerencia'],
     [2, 'Aumento del precio del café importado', 'Suministro', 'Media', 'Medio', 'Medio', 'Contratos suministro 6-12 meses, alternativa proveedor local, hedge UF', 'Operaciones'],
     [3, 'Subida de arriendo al renovar contrato', 'Inmobiliario', 'Alta', 'Alto', 'Crítico', 'Negociar contrato 3-5 años con cláusula reajuste IPC tope, opción renovación', 'Gerencia'],
     [4, 'Apertura de competencia directa adyacente', 'Competencia', 'Media', 'Alto', 'Alto', 'Programa fidelización desde día 1, café distintivo, comunidad social media', 'Marketing'],
-    [5, 'Cambios regulatorios sanitarios', 'Regulatorio', 'Baja', 'Medio', 'Medio', 'Monitoreo SEREMI Salud trimestral, certificaciones al día, asesor sanitario', 'Operaciones'],
+    [5, 'Cambios regulatorios sanitarios SEREMI', 'Regulatorio', 'Baja', 'Medio', 'Medio', 'Monitoreo trimestral, certificaciones al día, asesor sanitario externo', 'Operaciones'],
     [6, 'Aumento del salario mínimo / leyes laborales', 'Laboral', 'Media', 'Medio', 'Medio', 'Revisión productividad/persona, automatización (POS autoservicio si crece volumen)', 'Gerencia'],
     [7, 'Tipo de cambio insumos importados (granos especialidad)', 'FX', 'Media', 'Medio', 'Medio', 'Mix proveedores nacionales/import, contratos en UF cuando sea posible', 'Operaciones'],
     [8, 'Falla de máquina espresso (corazón operación)', 'Operacional', 'Baja', 'Alto', 'Medio', 'Mantención preventiva trimestral, contrato servicio técnico SLA 24h, fondo reposición', 'Operaciones'],
@@ -863,6 +545,8 @@ function setColWidths(ws, widths) {
     [10, 'Pandemia / emergencia que reduce flujo peatonal', 'Sanitario externo', 'Baja', 'Crítico', 'Alto', 'Reserva cash 6+ meses egresos, capacidad delivery rápido, plan contingencia', 'Gerencia'],
     [11, 'Rotación alta de baristas (1-2 personas críticas)', 'Talento', 'Alta', 'Medio', 'Alto', 'Contratos indefinidos, capacitación interna, segundo barista siempre certificado', 'RH'],
     [12, 'Caída del proveedor de combo envasado', 'Suministro', 'Baja', 'Crítico', 'Alto', 'Mínimo 2 proveedores certificados SEREMI, stock reserva 1 semana mínimo', 'Operaciones'],
+    [13, 'Comisión tarjetas sube por nueva ley', 'Regulatorio', 'Baja', 'Medio', 'Bajo', 'Negociar tarifa preferente Transbank PYME, considerar wallets (Mercado Pago) más baratos', 'Operaciones'],
+    [14, 'Incremento costos servicios básicos (UF en luz/gas)', 'Macro', 'Media', 'Medio', 'Medio', 'Plan tarifa fija con CGE/Enel, eficiencia energética en equipos', 'Operaciones'],
   ];
   const ws = XLSX.utils.aoa_to_sheet(data);
   setColWidths(ws, [4, 50, 18, 14, 12, 14, 70, 14]);
@@ -873,78 +557,79 @@ function setColWidths(ws, widths) {
 // HOJA 11: CONCLUSIÓN
 // ============================================================
 {
-  const ganadora = globalThis.__resultados[0];
-  const top3 = globalThis.__resultados.slice(0, 3);
+  const recomendadas = resultados.filter((r) => r.base.van > 0 && scoreUbicacion(r) >= 55);
+  const noRecomendadas = resultados.filter((r) => !(r.base.van > 0 && scoreUbicacion(r) >= 55));
+
   const data = [
-    ['CONCLUSIÓN Y RECOMENDACIÓN FINAL'],
+    [{ v: 'CONCLUSIÓN Y RECOMENDACIÓN FINAL', s: { font: { bold: true, sz: 16 } } }],
     [],
-    ['1. UBICACIÓN RECOMENDADA: ' + ganadora.u.nombre.toUpperCase()],
+    [{ v: '1. UBICACIÓN RECOMENDADA: ' + ganadora.u.nombre.toUpperCase(), s: { font: { bold: true, sz: 13 } } }],
     [],
-    ['Razones:'],
-    ['VAN base', ganadora.base.van.toLocaleString('es-CL') + ' CLP'],
+    ['Indicador', 'Valor'],
+    ['VAN base', '$' + ganadora.base.van.toLocaleString('es-CL')],
     ['TIR', (ganadora.base.tir * 100).toFixed(1) + '%'],
-    ['Payback', ganadora.base.payback === Infinity ? '> 5 años' : ganadora.base.payback.toFixed(2) + ' años'],
-    ['Inversión inicial total', '$' + ganadora.base.inversionTotal.toLocaleString('es-CL')],
+    ['Payback', Number.isFinite(ganadora.base.payback) ? ganadora.base.payback.toFixed(2) + ' años' : '> 5 años'],
+    ['Inversión inicial', '$' + ganadora.base.inversionTotal.toLocaleString('es-CL')],
     ['Combos/día base', ganadora.base.combosDia],
+    ['EBITDA año 1', '$' + ganadora.base.ebitdaAno1.toLocaleString('es-CL')],
+    ['Margen contribución', ((ganadora.u.ticketPromedio - ganadora.u.costoVariableUnitario) / ganadora.u.ticketPromedio * 100).toFixed(1) + '%'],
+    ['Score viabilidad', scoreUbicacion(ganadora) + ' / 100'],
     [],
-    ['Justificación:'],
+    [{ v: 'Justificación:', s: { font: { bold: true } } }],
     [ganadora.u.notasZona],
     [],
-    ['2. PODIO TOP 3 (por VAN base)'],
+    [{ v: '2. UBICACIONES POR ESCENARIO', s: { font: { bold: true, sz: 13 } } }],
     [],
-    ['#', 'Ubicación', 'VAN base', 'TIR', 'Payback', 'Inversión'],
-    ...top3.map((r, i) => [
-      i + 1, r.u.nombre,
-      r.base.van.toLocaleString('es-CL'),
-      (r.base.tir * 100).toFixed(1) + '%',
-      r.base.payback === Infinity ? '> 5' : r.base.payback.toFixed(2),
-      '$' + r.base.inversionTotal.toLocaleString('es-CL'),
+    [{ v: '✅ Recomendadas (' + recomendadas.length + ')', s: { font: { bold: true } } }],
+    ...(recomendadas.length === 0 ? [['(ninguna)']] : recomendadas.map((r) => [
+      r.u.nombre, '$' + r.base.van.toLocaleString('es-CL'),
+      Number.isFinite(r.base.tir) ? (r.base.tir * 100).toFixed(1) + '%' : '—',
+      'Score ' + scoreUbicacion(r),
+    ])),
+    [],
+    [{ v: '❌ No recomendadas (' + noRecomendadas.length + ')', s: { font: { bold: true } } }],
+    ...noRecomendadas.map((r) => [
+      r.u.nombre, '$' + r.base.van.toLocaleString('es-CL'),
+      Number.isFinite(r.base.tir) ? (r.base.tir * 100).toFixed(1) + '%' : '—',
+      'Score ' + scoreUbicacion(r),
     ]),
     [],
-    ['3. CRITERIOS DE DESCARTE'],
+    [{ v: '3. INSIGHT CLAVE', s: { font: { bold: true, sz: 13 } } }],
     [],
-    ['Las ubicaciones con VAN pesimista < −50% inversión inicial se consideran NO RECOMENDADAS por exposición a pérdida significativa.'],
+    ['Tras corrección del modelo (costos fijos reales, comisión tarjetas, valor terminal por múltiplo EBITDA y'],
+    ['Tcc retail food de 14%), solo 1 de las 7 ubicaciones evaluadas ofrece VAN claramente positivo y resiliente.'],
+    [''],
+    ['Esto refleja la realidad del retail food en Chile: la rentabilidad depende críticamente de la combinación'],
+    ['ticket × volumen × bajo costo fijo. El Golf logra esa combinación gracias a ticket alto ($4.500) sostenible'],
+    ['por el perfil ejecutivo de la zona y al volumen estable concentrado en horario laboral. El proyecto es'],
+    ['VIABLE pero NO sin riesgo: el escenario pesimista (-40% demanda) destruye valor, lo que obliga a un'],
+    ['plan de contingencia sólido y monitoreo mensual de KPIs operativos.'],
     [],
-    ['4. PRÓXIMOS PASOS'],
+    [{ v: '4. PRÓXIMOS PASOS', s: { font: { bold: true, sz: 13 } } }],
     [],
     ['1. Validar arriendo del local con propietario (firmar reserva con cláusula de renovación)'],
-    ['2. Iniciar trámite SII (Form 4415, código 561010 cafés y restaurantes)'],
+    ['2. Iniciar trámite SII (Form 4415, código 561010 cafés y restaurantes, Pro PYME 14 D N°3)'],
     ['3. Solicitar resolución sanitaria SEREMI categoría manipulación mínima (plazo 4-6 sem)'],
     ['4. Capacitar 2 baristas en curso manipulador alimentos (10 hrs OTEC autorizada, vigencia 3 años)'],
-    ['5. Concretar línea de crédito PYME bancaria (preaprobación con flujo proyectado)'],
-    ['6. Plan de marketing y comunidad pre-apertura (2 meses antes — Instagram, Google Maps)'],
-    ['7. Negociar contratos con 2 proveedores certificados de combo envasado'],
+    ['5. Concretar línea de crédito PYME bancaria si se opta por flujo inversionista (preaprobación)'],
+    ['6. Plan de marketing y comunidad pre-apertura (2 meses antes — Instagram, Google Maps, fidelización)'],
+    ['7. Negociar contratos con 2 proveedores certificados de combo envasado (volumen + alternativa)'],
     ['8. Cronograma de obra menor + compra equipos (8-12 semanas hasta apertura)'],
     [],
-    ['5. ALCANCE DEL PROYECTO'],
+    [{ v: '5. LIMITACIONES Y SUPUESTOS DEL MODELO', s: { font: { bold: true, sz: 13 } } }],
     [],
-    ['Modelo: cafetería compacta (30-35 m²) que vende UN combo único cerrado:'],
-    ['  · Espresso preparado al momento (máquina semiautomática 2-grupos)'],
-    ['  · Producto envasado del proveedor (croissant/sándwich/snack pre-empacado individual)'],
-    [],
-    ['NO incluye preparación de alimentos en local. Categoría sanitaria: manipulación mínima.'],
-    ['Personal mínimo: 2 baristas certificados manipuladores + 1 reemplazo (½ jornada).'],
-    [],
-    ['6. SUPUESTOS CRÍTICOS DEL MODELO'],
-    [],
-    ['Tasa costo capital (Tcc)', (TCC * 100).toFixed(1) + '%', 'Riesgo bajo modelo simple (vs 13% café tradicional)'],
-    ['Crecimiento perpetuidad', (G_PERPETUIDAD * 100).toFixed(1) + '%', 'Coherente con inflación largo plazo Chile'],
-    ['Régimen tributario', 'Pro PYME 14 D N°3', 'Tasa 25% + depreciación instantánea'],
-    ['Crecimiento demanda anual', '5%', 'Proyectado conservador vs sector cafetería 6-8%'],
-    ['Días operación / año', '312', 'Lunes a sábado · descansa domingo'],
-    ['Vida útil promedio activos', VIDA_PROMEDIO + ' años', 'Promedio ponderado por costo (depreciación lineal SLN)'],
-    ['Valor residual', '10% del CAPEX', 'Estimación conservadora venta de equipos al cierre'],
-    [],
-    ['7. LIMITACIONES Y FUENTES DE INCERTIDUMBRE'],
-    [],
-    ['• Demanda esperada calibrada con proxies (flujo peatonal, ingreso comuna, accesibilidad transporte) pero NO con estudio primario en el local específico'],
+    ['• Demanda calibrada con proxies (flujo peatonal, ingreso comuna, accesibilidad transporte) sin estudio'],
+    ['  primario en local específico — recomendable contar tráfico real durante 1 semana antes de firmar'],
     ['• Arriendos referenciales agregados — el valor final depende de negociación específica del contrato'],
     ['• Costos del combo envasado dependen del contrato con proveedor (volumen, exclusividad)'],
     ['• Modelo asume contrato de arriendo a 5 años con reajuste IPC; cambios drásticos requieren re-evaluación'],
-    ['• Análisis de sensibilidad muestra resistencia del proyecto: variables clave son DEMANDA y ARRIENDO'],
+    ['• Valor terminal por múltiplo EBITDA asume venta del going concern al cabo de 5 años a un precio de'],
+    ['  3.5x EBITDA del año 5. Más conservador que perpetuidad creciente (Gordon Growth) que no es realista'],
+    ['  para una cafetería independiente sin re-inversión en equipos.'],
   ];
+
   const ws = XLSX.utils.aoa_to_sheet(data);
-  setColWidths(ws, [4, 40, 22, 14, 12, 22]);
+  setColWidths(ws, [55, 22, 14, 18]);
   XLSX.utils.book_append_sheet(wb, ws, 'Conclusion');
 }
 
@@ -959,10 +644,12 @@ writeFileSync(outPath, buffer);
 
 console.log(`✓ Excel generado: ${outPath}`);
 console.log(`  Hojas: ${wb.SheetNames.join(', ')}`);
-console.log(`  Tamaño: ${(buffer.length / 1024).toFixed(1)} KB`);
-console.log('');
-console.log('=== TOP 3 UBICACIONES ===');
-globalThis.__resultados.slice(0, 3).forEach((r, i) => {
+console.log(`  Tamaño: ${(buffer.length / 1024).toFixed(1)} KB\n`);
+console.log('═══ TOP 3 UBICACIONES (modelo corregido) ═══');
+resultados.slice(0, 3).forEach((r, i) => {
+  const v = veredicto(r);
+  const tir = Number.isFinite(r.base.tir) ? (r.base.tir * 100).toFixed(1) + '%' : '—';
+  const pb = Number.isFinite(r.base.payback) && r.base.payback > 0 ? r.base.payback.toFixed(2) + ' años' : '> 5';
   console.log(`${i + 1}. ${r.u.nombre}`);
-  console.log(`   VAN base: $${r.base.van.toLocaleString('es-CL')} · TIR ${(r.base.tir * 100).toFixed(1)}% · Payback ${r.base.payback === Infinity ? '>5' : r.base.payback.toFixed(2) + ' años'}`);
+  console.log(`   VAN: $${r.base.van.toLocaleString('es-CL')} · TIR: ${tir} · Payback: ${pb} · Score: ${scoreUbicacion(r)} · ${v.texto}`);
 });

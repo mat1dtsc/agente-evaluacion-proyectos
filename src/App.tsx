@@ -1,20 +1,27 @@
+import { useMemo } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import { Coffee, FileSpreadsheet, FileText, MapPin, TrendingUp, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-/**
- * Puntos neurálgicos del proyecto — comunicados en el header como "credenciales".
- * Estos resultados provienen del análisis financiero a 5 años con flujo puro,
- * tasa de descuento 11.5% y régimen Pro PYME 14 D N°3 (impuesto 25%).
- */
-const KEY_FACTS = [
-  { icon: MapPin, label: '7 zonas RM', value: 'evaluadas', tone: 'from-orange-500 to-rose-500' },
-  { icon: Award, label: 'Ganadora', value: 'El Golf', tone: 'from-amber-500 to-orange-500' },
-  { icon: TrendingUp, label: 'VAN líder', value: '$544 M', tone: 'from-emerald-500 to-teal-500' },
-];
+import { calcularTodas } from '@/lib/finance/cafeModel';
+import { formatCLP } from '@/lib/utils';
 
 export default function App() {
+  // KPIs dinámicos del modelo corregido (re-calc en cada render — el modelo es puro)
+  const KEY_FACTS = useMemo(() => {
+    const resultados = calcularTodas();
+    resultados.sort((a, b) => b.base.van - a.base.van);
+    const ganadora = resultados[0];
+    const tirGanadora = Number.isFinite(ganadora.base.tir)
+      ? `${(ganadora.base.tir * 100).toFixed(0)}%`
+      : '—';
+    return [
+      { icon: MapPin, label: '7 zonas RM', value: 'evaluadas', tone: 'from-orange-500 to-rose-500' },
+      { icon: Award, label: 'Ganadora', value: ganadora.u.comuna, tone: 'from-amber-500 to-orange-500' },
+      { icon: TrendingUp, label: 'VAN · TIR', value: `${formatCLP(ganadora.base.van, true)} · ${tirGanadora}`, tone: 'from-emerald-500 to-teal-500' },
+    ];
+  }, []);
+
   return (
     <div className="flex h-screen flex-col">
       <header className="relative z-10 flex flex-wrap items-center justify-between gap-3 border-b border-border/40 px-6 py-3 glass-elevated">
