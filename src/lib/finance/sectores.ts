@@ -1,8 +1,9 @@
 /**
- * Catálogo de FORMATOS de cafetería en Chile con presets reales 2024-2025.
+ * Catálogo de FORMATOS retail food en Chile con presets reales 2024-2025.
  *
- * Este agente está enfocado EXCLUSIVAMENTE en proyectos cafeteros.
- * No incluye otros rubros retail food (heladería, restaurant, sushi, etc.).
+ * Catálogo GENÉRICO de retail food. El café es la primera vertical (7 formatos)
+ * y se complementa con otros rubros (comida rápida, heladería, panadería,
+ * restaurante, sushi, jugería) — cada preset declara su `categoria`.
  *
  * Cada formato incluye:
  *  - Inversión típica (con desglose por equipamiento + costos referenciales)
@@ -19,6 +20,23 @@
 import type { CargoPersonal } from './personal';
 import type { ProjectInputs } from './types';
 
+/** Rubros retail food cubiertos por el catálogo. El café es la primera vertical. */
+export type CategoriaRubro =
+  | 'cafe' | 'comida_rapida' | 'heladeria' | 'panaderia'
+  | 'restaurante' | 'sushi' | 'jugueria' | 'pizzeria';
+
+/** Metadatos de presentación por categoría (label + emoji para la UI). */
+export const CATEGORIA_META: Record<CategoriaRubro, { label: string; emoji: string }> = {
+  cafe:          { label: 'Café',                emoji: '☕' },
+  comida_rapida: { label: 'Comida rápida',       emoji: '🍔' },
+  heladeria:     { label: 'Heladería',           emoji: '🍦' },
+  panaderia:     { label: 'Panadería',           emoji: '🥖' },
+  restaurante:   { label: 'Restaurante',         emoji: '🍽️' },
+  sushi:         { label: 'Sushi',               emoji: '🍣' },
+  jugueria:      { label: 'Jugería / Saludable', emoji: '🥤' },
+  pizzeria:      { label: 'Pizzería',            emoji: '🍕' },
+};
+
 export interface EquipoSector {
   item: string;
   costoCLP: number;
@@ -28,6 +46,7 @@ export interface EquipoSector {
 
 export interface SectorPreset {
   id: string;
+  categoria: CategoriaRubro;
   nombre: string;
   emoji: string;
   descripcion: string;
@@ -70,6 +89,7 @@ export const SECTORES_RETAIL_FOOD: SectorPreset[] = [
   // ========== 1. CAFÉ EXPRESS — COMBO ÚNICO ENVASADO (BASE DEL PROYECTO) ==========
   {
     id: 'cafe_express',
+    categoria: 'cafe',
     nombre: 'Café Express · Combo Envasado',
     emoji: '☕',
     descripcion: 'Modelo simple: espresso preparado al momento + producto envasado del proveedor (croissant, sandwich o snack en pack individual sellado). SIN cocina, SIN preparación de alimentos. Solo bebida caliente + retail. 1-2 baristas, ticket medio-alto, alta rotación. Ideal zonas oficina con flujo peatonal en horario punta.',
@@ -124,6 +144,7 @@ export const SECTORES_RETAIL_FOOD: SectorPreset[] = [
   // ========== 2. CAFÉ DE ESPECIALIDAD (THIRD WAVE) ==========
   {
     id: 'cafe_especialidad',
+    categoria: 'cafe',
     nombre: 'Café de Especialidad (third wave)',
     emoji: '🫖',
     descripcion: 'Café de origen, métodos de filtrado (V60, Chemex, Aeropress), repostería propia, leche vegetal. Ticket alto, requiere barista certificado SCA. Cliente fiel y educado en café.',
@@ -178,6 +199,7 @@ export const SECTORES_RETAIL_FOOD: SectorPreset[] = [
   // ========== 3. CAFÉ TRADICIONAL CON CARTA AMPLIA ==========
   {
     id: 'cafe_tradicional',
+    categoria: 'cafe',
     nombre: 'Café Tradicional con Carta',
     emoji: '🥐',
     descripcion: 'Café clásico con carta amplia: brunch, sándwiches, jugos, postres, té. Servicio en mesa. Cliente recurrente que viene a almorzar, leer prensa, reuniones de trabajo informal.',
@@ -235,6 +257,7 @@ export const SECTORES_RETAIL_FOOD: SectorPreset[] = [
   // ========== 4. CAFÉ FRANQUICIA / CADENA INTERNACIONAL ==========
   {
     id: 'cafe_franquicia',
+    categoria: 'cafe',
     nombre: 'Café Franquicia',
     emoji: '🏪',
     descripcion: 'Operar bajo marca consolidada (franquicia o cadena con know-how). Mayor capex (canon + royalty + decoración estándar) pero curva de aprendizaje corta y demanda esperada por marca.',
@@ -290,6 +313,7 @@ export const SECTORES_RETAIL_FOOD: SectorPreset[] = [
   // ========== 5. CAFÉ TO-GO / KIOSCO DE PASO ==========
   {
     id: 'cafe_kiosco',
+    categoria: 'cafe',
     nombre: 'Café Kiosco / To-Go',
     emoji: '🪟',
     descripcion: 'Formato chico (4-12 m²) ventana al exterior, sin asientos. Bajo capex, alto volumen de ventas en horario punta. Ideal Metro, esquinas oficina, accesos universitarios.',
@@ -340,6 +364,7 @@ export const SECTORES_RETAIL_FOOD: SectorPreset[] = [
   // ========== 6. CAFÉ COWORKING ==========
   {
     id: 'cafe_coworking',
+    categoria: 'cafe',
     nombre: 'Café + Coworking',
     emoji: '💻',
     descripcion: 'Café con espacios de trabajo (mesas amplias, enchufes, wifi premium, salas reuniones). Modelo dual: ticket de barra + suscripciones mensuales/diarias del coworking.',
@@ -395,6 +420,7 @@ export const SECTORES_RETAIL_FOOD: SectorPreset[] = [
   // ========== 7. CAFÉ TOSTADOR (ROASTERY) ==========
   {
     id: 'cafe_tostador',
+    categoria: 'cafe',
     nombre: 'Café Tostador (Roastery)',
     emoji: '🔥',
     descripcion: 'Tueste in-house del café + barra de degustación + venta retail (bolsas) + venta mayorista a otros cafés. Modelo B2C+B2B con margen alto en grano tostado.',
@@ -445,6 +471,335 @@ export const SECTORES_RETAIL_FOOD: SectorPreset[] = [
       'SCA Chile: análisis sector tostadores especialidad',
       'Procafé: importaciones café verde Chile 2024',
       'Estudio mercado retail café gourmet (ProChile)',
+    ],
+  },
+
+  // ========== 8. COMIDA RÁPIDA — HAMBURGUESERÍA DE BARRIO ==========
+  {
+    id: 'hamburgueseria',
+    categoria: 'comida_rapida',
+    nombre: 'Hamburguesería de Barrio',
+    emoji: '🍔',
+    descripcion: 'Comida rápida casual: hamburguesas a la plancha, papas, completos y bebidas. Consumo en local + take-away + delivery por apps. Cocina caliente con extracción. Alto volumen mediodía y noche.',
+    ejemploReal: 'Streat Burger · Juan Maestro · La Burguesía · locales de barrio independientes',
+    riesgo: 3,
+    inversion: {
+      desglose: [
+        { item: 'Plancha + freidora doble profesional', costoCLP: 4_500_000, vidaUtilSII: 7 },
+        { item: 'Campana extracción industrial + ductos', costoCLP: 3_200_000, vidaUtilSII: 15 },
+        { item: 'Refrigeración (cámara + bajo mesón frío)', costoCLP: 4_800_000, vidaUtilSII: 10 },
+        { item: 'Mesones acero inoxidable + zona de armado', costoCLP: 2_500_000, vidaUtilSII: 15 },
+        { item: 'Mobiliario público (30 puestos) + barra', costoCLP: 5_000_000, vidaUtilSII: 7 },
+        { item: 'POS + KDS cocina + integración apps delivery', costoCLP: 1_800_000, vidaUtilSII: 5 },
+        { item: 'Habilitación eléctrica + sanitaria + extracción', costoCLP: 5_500_000, vidaUtilSII: 20 },
+        { item: 'Letrero + branding + menú boards', costoCLP: 2_200_000, vidaUtilSII: 5 },
+        { item: 'Vajilla + desechables + empaque delivery inicial', costoCLP: 800_000, vidaUtilSII: 3 },
+        { item: 'Otros equipos menores + contingencia 5%', costoCLP: 1_200_000, vidaUtilSII: 5 },
+      ],
+      capitalTrabajoMeses: 4,
+      permisosIniciales: 900_000,
+    },
+    operacion: {
+      ticketPromedio: 7_500,
+      costoVariableUnitario: 3_000,
+      costosFijosNoLaboralesMensuales: 3_500_000,
+      diasOperacionAno: 360,
+      crecimientoDemandaAnual: 0.05,
+      horizonteAnos: 6,
+    },
+    personal: [
+      { cargo: 'Cocinero jefe / parrillero', cantidad: 1, sueldoBrutoMensual: 1_200_000, jornada: 'completa' },
+      { cargo: 'Cocinero línea', cantidad: 2, sueldoBrutoMensual: 800_000, jornada: 'completa' },
+      { cargo: 'Cajero / atención', cantidad: 2, sueldoBrutoMensual: 600_000, jornada: 'completa' },
+      { cargo: 'Despacho / repartidor', cantidad: 1, sueldoBrutoMensual: 600_000, jornada: 'completa' },
+      { cargo: 'Aseo', cantidad: 1, sueldoBrutoMensual: 510_636, jornada: 'completa' },
+    ],
+    demanda: { base: 120, pesimista: 75, optimista: 200, unidad: 'pedidos/día' },
+    financiamiento: {
+      porcentajeDeudaSugerido: 0.45,
+      tasaBancoPYME: 0.105,
+      plazoDeudaAnos: 6,
+      tasaCostoCapital: TCC_POR_RIESGO[3],
+    },
+    fuentes: [
+      'Achiga: rentabilidad comida rápida casual Chile 2024',
+      'Asociación de Restaurantes de Chile: ticket promedio fast-casual',
+      'Princess Food Service: equipamiento cocina HORECA 2025',
+    ],
+  },
+
+  // ========== 9. HELADERÍA ARTESANAL ==========
+  {
+    id: 'heladeria_artesanal',
+    categoria: 'heladeria',
+    nombre: 'Heladería Artesanal',
+    emoji: '🍦',
+    descripcion: 'Helados artesanales producidos in-house (mantecación propia) + barra de servicio. Fuerte estacionalidad (peak verano oct-mar). Ticket medio, alto margen en producto propio.',
+    ejemploReal: 'Emporio La Rosa · Sebastián · Bravissimo · heladerías de barrio premium',
+    riesgo: 3,
+    inversion: {
+      desglose: [
+        { item: 'Mantecadora vertical / batch freezer profesional', costoCLP: 9_500_000, vidaUtilSII: 10 },
+        { item: 'Vitrina heladera de pozos (16-20 sabores)', costoCLP: 6_500_000, vidaUtilSII: 10 },
+        { item: 'Conservadora / congelador almacenamiento', costoCLP: 2_800_000, vidaUtilSII: 10 },
+        { item: 'Pasteurizadora + maduradora de mix', costoCLP: 4_500_000, vidaUtilSII: 10 },
+        { item: 'Mesón de trabajo + lavado acero inox', costoCLP: 1_800_000, vidaUtilSII: 15 },
+        { item: 'Mobiliario público + barra (20 puestos)', costoCLP: 4_500_000, vidaUtilSII: 7 },
+        { item: 'POS + lector tarjetas', costoCLP: 650_000, vidaUtilSII: 5 },
+        { item: 'Habilitación eléctrica + sanitaria', costoCLP: 3_200_000, vidaUtilSII: 20 },
+        { item: 'Letrero + branding', costoCLP: 1_500_000, vidaUtilSII: 5 },
+        { item: 'Vajilla + copas + cucharas + conos inicial', costoCLP: 700_000, vidaUtilSII: 3 },
+      ],
+      capitalTrabajoMeses: 5,
+      permisosIniciales: 850_000,
+    },
+    operacion: {
+      ticketPromedio: 4_500,
+      costoVariableUnitario: 1_400,
+      costosFijosNoLaboralesMensuales: 2_800_000,
+      diasOperacionAno: 330,
+      crecimientoDemandaAnual: 0.06,
+      horizonteAnos: 6,
+    },
+    personal: [
+      { cargo: 'Maestro heladero', cantidad: 1, sueldoBrutoMensual: 1_200_000, jornada: 'completa' },
+      { cargo: 'Heladero / atención', cantidad: 2, sueldoBrutoMensual: 650_000, jornada: 'completa' },
+      { cargo: 'Cajero', cantidad: 1, sueldoBrutoMensual: 600_000, jornada: 'completa' },
+      { cargo: 'Aseo', cantidad: 1, sueldoBrutoMensual: 510_636, jornada: 'parcial' },
+    ],
+    demanda: { base: 150, pesimista: 90, optimista: 260, unidad: 'porciones/día' },
+    financiamiento: {
+      porcentajeDeudaSugerido: 0.45,
+      tasaBancoPYME: 0.105,
+      plazoDeudaAnos: 6,
+      tasaCostoCapital: TCC_POR_RIESGO[3],
+    },
+    fuentes: [
+      'ANIH (Asociación Nacional de Industriales del Helado): consumo per cápita Chile',
+      'Achiga: estacionalidad heladerías RM',
+      'Mercado Libre HORECA: equipamiento mantecación 2025',
+    ],
+  },
+
+  // ========== 10. PANADERÍA BOUTIQUE + CAFETERÍA ==========
+  {
+    id: 'panaderia_boutique',
+    categoria: 'panaderia',
+    nombre: 'Panadería Boutique + Café',
+    emoji: '🥖',
+    descripcion: 'Panadería de masa madre + pastelería propia con rincón de cafetería. Producción in-house desde la madrugada + venta retail y consumo. Ticket combinado pan + café. Cliente recurrente diario.',
+    ejemploReal: 'Le Fournil · Castaño (boutique) · panaderías de masa madre de barrio',
+    riesgo: 3,
+    inversion: {
+      desglose: [
+        { item: 'Horno rotatorio / convección profesional', costoCLP: 12_000_000, vidaUtilSII: 15 },
+        { item: 'Amasadora espiral 25kg', costoCLP: 4_500_000, vidaUtilSII: 10 },
+        { item: 'Sobadora / laminadora', costoCLP: 2_500_000, vidaUtilSII: 10 },
+        { item: 'Cámara de fermentación controlada', costoCLP: 4_500_000, vidaUtilSII: 10 },
+        { item: 'Refrigeración (cámara + vitrinas frías)', costoCLP: 5_500_000, vidaUtilSII: 10 },
+        { item: 'Máquina espresso 2-grupos (rincón café)', costoCLP: 4_500_000, vidaUtilSII: 7 },
+        { item: 'Vitrinas exhibidoras pan + pastelería', costoCLP: 3_500_000, vidaUtilSII: 7 },
+        { item: 'Mobiliario público (24 puestos) + barra', costoCLP: 4_500_000, vidaUtilSII: 7 },
+        { item: 'POS + balanza homologada + lector', costoCLP: 1_200_000, vidaUtilSII: 5 },
+        { item: 'Habilitación trifásica + sanitaria + extracción', costoCLP: 6_500_000, vidaUtilSII: 20 },
+        { item: 'Letrero + branding + packaging', costoCLP: 2_200_000, vidaUtilSII: 5 },
+        { item: 'Utensilios panadería/pastelería + vajilla', costoCLP: 1_500_000, vidaUtilSII: 5 },
+      ],
+      capitalTrabajoMeses: 5,
+      permisosIniciales: 1_100_000,
+    },
+    operacion: {
+      ticketPromedio: 5_500,
+      costoVariableUnitario: 1_800,
+      costosFijosNoLaboralesMensuales: 3_200_000,
+      diasOperacionAno: 360,
+      crecimientoDemandaAnual: 0.04,
+      horizonteAnos: 7,
+    },
+    personal: [
+      { cargo: 'Maestro panadero', cantidad: 1, sueldoBrutoMensual: 1_400_000, jornada: 'completa' },
+      { cargo: 'Ayudante de panadería', cantidad: 2, sueldoBrutoMensual: 650_000, jornada: 'completa' },
+      { cargo: 'Pastelero', cantidad: 1, sueldoBrutoMensual: 950_000, jornada: 'completa' },
+      { cargo: 'Atención / caja', cantidad: 2, sueldoBrutoMensual: 600_000, jornada: 'completa' },
+      { cargo: 'Barista', cantidad: 1, sueldoBrutoMensual: 700_000, jornada: 'completa' },
+      { cargo: 'Aseo', cantidad: 1, sueldoBrutoMensual: 510_636, jornada: 'completa' },
+    ],
+    demanda: { base: 220, pesimista: 140, optimista: 330, unidad: 'tickets/día' },
+    financiamiento: {
+      porcentajeDeudaSugerido: 0.50,
+      tasaBancoPYME: 0.105,
+      plazoDeudaAnos: 7,
+      tasaCostoCapital: TCC_POR_RIESGO[3],
+    },
+    fuentes: [
+      'INDESPAN / Fechipan: consumo de pan Chile (≈ 86 kg/persona/año)',
+      'Achiga: márgenes panadería boutique vs tradicional',
+      'Princess Food Service: equipamiento panificación 2025',
+    ],
+  },
+
+  // ========== 11. RESTAURANTE CASUAL (~40 CUBIERTOS) ==========
+  {
+    id: 'restaurante_casual',
+    categoria: 'restaurante',
+    nombre: 'Restaurante Casual',
+    emoji: '🍽️',
+    descripcion: 'Restaurante de servicio en mesa, carta media (~40 cubiertos) con bar. Almuerzo ejecutivo + cena. Mayor capex e intensidad de personal; sensible a rotación de mesas y ticket de bar.',
+    ejemploReal: 'Bistró de barrio · Tiramisú · restaurantes casual independientes RM',
+    riesgo: 4,
+    inversion: {
+      desglose: [
+        { item: 'Cocina industrial 6 quemadores + horno + plancha', costoCLP: 8_500_000, vidaUtilSII: 15 },
+        { item: 'Campana extracción industrial + ductos', costoCLP: 4_500_000, vidaUtilSII: 15 },
+        { item: 'Cámara refrigeración 2 cuerpos + congelador', costoCLP: 7_500_000, vidaUtilSII: 10 },
+        { item: 'Lavavajillas industrial de capota', costoCLP: 3_500_000, vidaUtilSII: 10 },
+        { item: 'Mesones + zona fría + estanterías acero', costoCLP: 3_500_000, vidaUtilSII: 15 },
+        { item: 'Mobiliario público 40 puestos + barra', costoCLP: 9_500_000, vidaUtilSII: 7 },
+        { item: 'Vajilla, cristalería, cubertería, mantelería', costoCLP: 3_500_000, vidaUtilSII: 3 },
+        { item: 'POS + KDS cocina + sistema de reservas', costoCLP: 2_200_000, vidaUtilSII: 5 },
+        { item: 'Habilitación + sanitaria + baños públicos + extracción', costoCLP: 9_500_000, vidaUtilSII: 20 },
+        { item: 'Decoración interior + iluminación + branding', costoCLP: 6_500_000, vidaUtilSII: 7 },
+        { item: 'Bar: backbar + refrigeración bebidas + cristalería', costoCLP: 3_000_000, vidaUtilSII: 7 },
+      ],
+      capitalTrabajoMeses: 5,
+      permisosIniciales: 1_400_000,
+    },
+    operacion: {
+      ticketPromedio: 14_000,
+      costoVariableUnitario: 4_500,
+      costosFijosNoLaboralesMensuales: 5_500_000,
+      diasOperacionAno: 350,
+      crecimientoDemandaAnual: 0.04,
+      horizonteAnos: 7,
+    },
+    personal: [
+      { cargo: 'Chef ejecutivo', cantidad: 1, sueldoBrutoMensual: 1_800_000, jornada: 'completa' },
+      { cargo: 'Cocinero', cantidad: 2, sueldoBrutoMensual: 950_000, jornada: 'completa' },
+      { cargo: 'Ayudante de cocina', cantidad: 2, sueldoBrutoMensual: 620_000, jornada: 'completa' },
+      { cargo: 'Garzón / mesero', cantidad: 4, sueldoBrutoMensual: 600_000, jornada: 'completa' },
+      { cargo: 'Host / cajero', cantidad: 1, sueldoBrutoMensual: 700_000, jornada: 'completa' },
+      { cargo: 'Bartender', cantidad: 1, sueldoBrutoMensual: 800_000, jornada: 'completa' },
+      { cargo: 'Lavaloza / aseo', cantidad: 2, sueldoBrutoMensual: 510_636, jornada: 'completa' },
+    ],
+    demanda: { base: 90, pesimista: 55, optimista: 150, unidad: 'cubiertos/día' },
+    financiamiento: {
+      porcentajeDeudaSugerido: 0.50,
+      tasaBancoPYME: 0.11,
+      plazoDeudaAnos: 7,
+      tasaCostoCapital: TCC_POR_RIESGO[4],
+    },
+    fuentes: [
+      'Asociación de Restaurantes de Chile (Achiga): estructura de costos restaurante casual',
+      'Estudio Achiga 2024: rotación de mesas y ticket promedio RM',
+      'Princess Food Service: cocina industrial HORECA 2025',
+    ],
+  },
+
+  // ========== 12. SUSHI DELIVERY-FIRST ==========
+  {
+    id: 'sushi_delivery',
+    categoria: 'sushi',
+    nombre: 'Sushi Delivery-First',
+    emoji: '🍣',
+    descripcion: 'Sushi orientado a delivery (dark kitchen + barra reducida). Bajo arriendo (no requiere ubicación premium), fuerte dependencia de apps (Rappi/PedidosYa/Uber Eats). Cadena de frío estricta por pescado crudo.',
+    ejemploReal: 'Niu Sushi · Konbo · Sushi Home · dark kitchens de sushi',
+    riesgo: 4,
+    inversion: {
+      desglose: [
+        { item: 'Mesones fríos de sushi + topping rail refrigerado', costoCLP: 5_500_000, vidaUtilSII: 10 },
+        { item: 'Máquina de arroz industrial + mantenedor', costoCLP: 1_500_000, vidaUtilSII: 7 },
+        { item: 'Refrigeración pescado (cámara + abatidor)', costoCLP: 6_500_000, vidaUtilSII: 10 },
+        { item: 'Congelador -20° almacenamiento', costoCLP: 2_800_000, vidaUtilSII: 10 },
+        { item: 'Campana + habilitación cocina caliente (tempura)', costoCLP: 3_500_000, vidaUtilSII: 15 },
+        { item: 'Mesón de trabajo acero + lavado', costoCLP: 2_000_000, vidaUtilSII: 15 },
+        { item: 'Estación de empaque delivery + selladora', costoCLP: 1_500_000, vidaUtilSII: 7 },
+        { item: 'POS + integración apps delivery', costoCLP: 1_800_000, vidaUtilSII: 5 },
+        { item: 'Habilitación sanitaria estricta (cadena de frío)', costoCLP: 5_500_000, vidaUtilSII: 20 },
+        { item: 'Branding + packaging delivery inicial', costoCLP: 2_200_000, vidaUtilSII: 5 },
+        { item: 'Mobiliario barra reducida (12 puestos) + atención', costoCLP: 2_500_000, vidaUtilSII: 7 },
+      ],
+      capitalTrabajoMeses: 5,
+      permisosIniciales: 1_300_000,
+    },
+    operacion: {
+      ticketPromedio: 12_000,
+      costoVariableUnitario: 4_200,
+      costosFijosNoLaboralesMensuales: 3_000_000,
+      diasOperacionAno: 360,
+      crecimientoDemandaAnual: 0.07,
+      horizonteAnos: 6,
+    },
+    personal: [
+      { cargo: 'Sushiman jefe (itamae)', cantidad: 1, sueldoBrutoMensual: 1_400_000, jornada: 'completa' },
+      { cargo: 'Sushiman', cantidad: 2, sueldoBrutoMensual: 900_000, jornada: 'completa' },
+      { cargo: 'Ayudante de cocina', cantidad: 1, sueldoBrutoMensual: 620_000, jornada: 'completa' },
+      { cargo: 'Cajero / despacho', cantidad: 1, sueldoBrutoMensual: 600_000, jornada: 'completa' },
+      { cargo: 'Repartidor', cantidad: 1, sueldoBrutoMensual: 550_000, jornada: 'completa' },
+      { cargo: 'Aseo', cantidad: 1, sueldoBrutoMensual: 510_636, jornada: 'parcial' },
+    ],
+    demanda: { base: 70, pesimista: 45, optimista: 130, unidad: 'pedidos/día' },
+    financiamiento: {
+      porcentajeDeudaSugerido: 0.45,
+      tasaBancoPYME: 0.11,
+      plazoDeudaAnos: 6,
+      tasaCostoCapital: TCC_POR_RIESGO[4],
+    },
+    fuentes: [
+      'Estudio delivery de comida Chile (NielsenIQ): share sushi',
+      'Achiga: márgenes dark kitchen vs local con atención',
+      'Comisiones apps delivery Chile (Rappi/PedidosYa): 20-30% del ticket',
+    ],
+  },
+
+  // ========== 13. JUGERÍA / SALUDABLE TO-GO ==========
+  {
+    id: 'jugueria_saludable',
+    categoria: 'jugueria',
+    nombre: 'Jugería / Saludable To-Go',
+    emoji: '🥤',
+    descripcion: 'Jugos prensados en frío, smoothies, bowls y snacks saludables. Formato chico to-go, bajo capex, alta rotación en horario gimnasio/oficina. Ticket medio-bajo, margen alto en fruta.',
+    ejemploReal: 'Quínoa · Sano · Naturwarma · barras de jugos en gimnasios y oficinas',
+    riesgo: 2,
+    inversion: {
+      desglose: [
+        { item: 'Extractores prensado en frío + licuadoras alta potencia', costoCLP: 3_500_000, vidaUtilSII: 5 },
+        { item: 'Refrigeración fruta/verdura (cámara + vitrina)', costoCLP: 3_200_000, vidaUtilSII: 10 },
+        { item: 'Vitrina refrigerada exhibición bowls', costoCLP: 1_800_000, vidaUtilSII: 7 },
+        { item: 'Mesón de trabajo acero + lavado', costoCLP: 1_500_000, vidaUtilSII: 15 },
+        { item: 'Mobiliario barra alta (8 puestos) take-away', costoCLP: 1_800_000, vidaUtilSII: 7 },
+        { item: 'POS portable + lector', costoCLP: 650_000, vidaUtilSII: 5 },
+        { item: 'Habilitación eléctrica + sanitaria básica', costoCLP: 2_200_000, vidaUtilSII: 20 },
+        { item: 'Letrero + branding saludable', costoCLP: 950_000, vidaUtilSII: 5 },
+        { item: 'Vasos eco take-away + tapas + bowls inicial', costoCLP: 600_000, vidaUtilSII: 3 },
+        { item: 'Otros equipos menores + contingencia', costoCLP: 800_000, vidaUtilSII: 5 },
+      ],
+      capitalTrabajoMeses: 3,
+      permisosIniciales: 650_000,
+    },
+    operacion: {
+      ticketPromedio: 4_200,
+      costoVariableUnitario: 1_500,
+      costosFijosNoLaboralesMensuales: 1_800_000,
+      diasOperacionAno: 330,
+      crecimientoDemandaAnual: 0.06,
+      horizonteAnos: 5,
+    },
+    personal: [
+      { cargo: 'Jefe de barra saludable', cantidad: 1, sueldoBrutoMensual: 800_000, jornada: 'completa' },
+      { cargo: 'Atención / preparación', cantidad: 2, sueldoBrutoMensual: 580_000, jornada: 'completa' },
+      { cargo: 'Reemplazo días libres', cantidad: 1, sueldoBrutoMensual: 510_636, jornada: 'parcial' },
+    ],
+    demanda: { base: 130, pesimista: 80, optimista: 220, unidad: 'jugos/día' },
+    financiamiento: {
+      porcentajeDeudaSugerido: 0.35,
+      tasaBancoPYME: 0.10,
+      plazoDeudaAnos: 4,
+      tasaCostoCapital: TCC_POR_RIESGO[2],
+    },
+    fuentes: [
+      'Tendencia alimentación saludable Chile (Euromonitor 2024)',
+      'Achiga: formatos to-go saludables en zonas oficina/gimnasio',
+      'Mercado Libre HORECA: extractores y licuadoras profesionales 2025',
     ],
   },
 ];
