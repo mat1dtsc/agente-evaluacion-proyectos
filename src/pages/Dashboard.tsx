@@ -7,6 +7,7 @@ import { CompetitionPanel } from '@/components/panels/CompetitionPanel';
 import { DemandPanel } from '@/components/panels/DemandPanel';
 import { FinancialPanel } from '@/components/panels/FinancialPanel';
 import { SensitivityPanel } from '@/components/panels/SensitivityPanel';
+import { ComparadorPanel } from '@/components/panels/ComparadorPanel';
 import { useProjectStore } from '@/store/projectStore';
 
 export default function Dashboard() {
@@ -22,6 +23,7 @@ export default function Dashboard() {
         <Tabs defaultValue="zonas" value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
           <TabsList>
             <TabsTrigger value="zonas">Zonas</TabsTrigger>
+            <TabsTrigger value="comparar">Comparar</TabsTrigger>
             <TabsTrigger value="financiero">Financiero</TabsTrigger>
             <TabsTrigger value="demografia">Demografía</TabsTrigger>
             <TabsTrigger value="flujos">Flujos</TabsTrigger>
@@ -30,6 +32,7 @@ export default function Dashboard() {
             <TabsTrigger value="sensibilidad">Sensibilidad</TabsTrigger>
           </TabsList>
           <TabsContent value="zonas"><ZonasPanel /></TabsContent>
+          <TabsContent value="comparar"><ComparadorPanel /></TabsContent>
           <TabsContent value="financiero"><FinancialPanel /></TabsContent>
           <TabsContent value="demografia"><DemographicsPanel /></TabsContent>
           <TabsContent value="flujos"><FlowPanel /></TabsContent>
