@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useProjectStore } from '@/store/projectStore';
-import { SECTORES_RETAIL_FOOD, applySectorToInputs, inversionTotal, type SectorPreset } from '@/lib/finance/sectores';
+import { SECTORES_RETAIL_FOOD, applySectorToInputs, inversionTotal, CATEGORIA_META, type SectorPreset, type CategoriaRubro } from '@/lib/finance/sectores';
 import { formatCLP, formatPct } from '@/lib/utils';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { TrendingUp, Users, Coffee, Calendar, Sparkles, ChevronRight, X } from 'lucide-react';
+import { TrendingUp, Users, Receipt, Calendar, Sparkles, ChevronRight, X } from 'lucide-react';
 
 interface Props {
   onClose?: () => void;
@@ -15,6 +15,11 @@ export function SectorSelector({ onClose }: Props) {
   const updateInputs = useProjectStore((s) => s.updateInputs);
   const setProjectName = useProjectStore((s) => s.setProjectName);
   const [selected, setSelected] = useState<SectorPreset | null>(null);
+  const [categoria, setCategoria] = useState<CategoriaRubro | 'todos'>('todos');
+  const categoriasPresentes = Array.from(new Set(SECTORES_RETAIL_FOOD.map((s) => s.categoria)));
+  const visibles = categoria === 'todos'
+    ? SECTORES_RETAIL_FOOD
+    : SECTORES_RETAIL_FOOD.filter((s) => s.categoria === categoria);
 
   const handleApply = (sector: SectorPreset) => {
     const inputs = applySectorToInputs(sector);
@@ -33,10 +38,10 @@ export function SectorSelector({ onClose }: Props) {
             Onboarding
           </div>
           <h2 className="font-serif-display text-xl leading-tight">
-            Elige el formato de tu cafetería
+            Elige el formato de tu proyecto retail food
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            7 formatos de café precargados con equipamiento, ticket, costos y planilla típicos del sector cafetero chileno (referenciales 2024-2025).
+            {SECTORES_RETAIL_FOOD.length} formatos retail food precargados (café, comida rápida, heladería, panadería, restaurante, sushi, jugería) con equipamiento, ticket, costos y planilla típicos del mercado chileno (referenciales 2024-2025).
           </p>
         </div>
         {onClose && (
@@ -49,9 +54,23 @@ export function SectorSelector({ onClose }: Props) {
         )}
       </div>
 
+      {/* Filtro por categoría */}
+      <div className="flex flex-wrap gap-1.5">
+        <CategoriaChip activo={categoria === 'todos'} onClick={() => setCategoria('todos')} emoji="🍱" label="Todos" />
+        {categoriasPresentes.map((c) => (
+          <CategoriaChip
+            key={c}
+            activo={categoria === c}
+            onClick={() => setCategoria(c)}
+            emoji={CATEGORIA_META[c].emoji}
+            label={CATEGORIA_META[c].label}
+          />
+        ))}
+      </div>
+
       {/* Grid de sectores */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {SECTORES_RETAIL_FOOD.map((s, i) => (
+        {visibles.map((s, i) => (
           <motion.button
             key={s.id}
             initial={{ opacity: 0, y: 8 }}
@@ -125,7 +144,7 @@ export function SectorSelector({ onClose }: Props) {
 
               {/* 4 KPIs principales */}
               <div className="grid grid-cols-4 gap-2 text-center">
-                <KPI icon={<Coffee className="h-3 w-3" />} label="Ticket" value={formatCLP(selected.operacion.ticketPromedio)} />
+                <KPI icon={<Receipt className="h-3 w-3" />} label="Ticket" value={formatCLP(selected.operacion.ticketPromedio)} />
                 <KPI icon={<TrendingUp className="h-3 w-3" />} label="Demanda" value={`${selected.demanda.base}/d`} />
                 <KPI icon={<Users className="h-3 w-3" />} label="Planilla" value={`${selected.personal.reduce((s, p) => s + p.cantidad, 0)} pers.`} />
                 <KPI icon={<Calendar className="h-3 w-3" />} label="Horizonte" value={`${selected.operacion.horizonteAnos} años`} />
@@ -180,6 +199,22 @@ export function SectorSelector({ onClose }: Props) {
         </motion.div>
       )}
     </div>
+  );
+}
+
+function CategoriaChip({ activo, onClick, emoji, label }: { activo: boolean; onClick: () => void; emoji: string; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all ${
+        activo
+          ? 'border-accent bg-accent/10 text-accent'
+          : 'border-border text-muted-foreground hover:border-accent/40 hover:text-foreground'
+      }`}
+    >
+      <span>{emoji}</span>
+      {label}
+    </button>
   );
 }
 
