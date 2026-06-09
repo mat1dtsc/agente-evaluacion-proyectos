@@ -34,7 +34,7 @@ export default defineConfig({
           'leaflet': ['react-leaflet', 'leaflet'],
           'charts': ['recharts'],
           'animation': ['framer-motion'],
-          'export': ['xlsx', 'docx'],
+          'export': ['xlsx', 'docx', 'jspdf', 'jspdf-autotable'],
           'data-fetching': ['@tanstack/react-query'],
         },
       },

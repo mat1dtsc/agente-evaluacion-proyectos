@@ -6,11 +6,18 @@ import { buildPureFlow } from '@/lib/finance/puroFlow';
 import { calcularUbicacion, UBICACIONES } from '@/lib/finance/cafeModel';
 import { useMemo } from 'react';
 import { formatCLP } from '@/lib/utils';
+import { monteCarlo } from '@/lib/finance/monteCarlo';
+import { MonteCarloChart } from '../charts/MonteCarloChart';
 
 export function SensitivityPanel() {
   const inputs = useProjectStore((s) => s.inputs);
   const selectedLocationId = useProjectStore((s) => s.selectedLocationId);
   const { sensitivity, flujoPuro, usandoModeloCorregido } = useFinancialModel();
+
+  const monteCarloResult = useMemo(
+    () => monteCarlo(inputs, { iterations: 2000, seed: 42 }),
+    [inputs],
+  );
 
   // Heatmap precio × demanda — usa el mismo modelo que el FinancialPanel
   // (cafeModel si hay zona seleccionada, modelo viejo si no)
@@ -63,6 +70,21 @@ export function SensitivityPanel() {
         </CardHeader>
         <CardContent>
           <SensitivityTornado results={sensitivity} baseVan={flujoPuro.van} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Simulación Monte Carlo</CardTitle>
+          <CardDescription>2.000 iteraciones con shocks conjuntos: demanda ±15%, precio ±8%, costo ±10%.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MonteCarloChart result={monteCarloResult} />
+          {usandoModeloCorregido && (
+            <p className="mt-2 text-[10px] text-muted-foreground">
+              La simulación corre sobre el modelo editable (supuestos de este panel). El VAN base de la zona seleccionada se calcula con el modelo corregido en el panel Financiero.
+            </p>
+          )}
         </CardContent>
       </Card>
 
