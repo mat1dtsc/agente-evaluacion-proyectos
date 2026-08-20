@@ -7,6 +7,8 @@ import { CompetitionPanel } from '@/components/panels/CompetitionPanel';
 import { DemandPanel } from '@/components/panels/DemandPanel';
 import { FinancialPanel } from '@/components/panels/FinancialPanel';
 import { SensitivityPanel } from '@/components/panels/SensitivityPanel';
+import { ComparadorPanel } from '@/components/panels/ComparadorPanel';
+import { AsesorPanel } from '@/components/panels/AsesorPanel';
 import { useProjectStore } from '@/store/projectStore';
 
 export default function Dashboard() {
@@ -22,20 +24,24 @@ export default function Dashboard() {
         <Tabs defaultValue="zonas" value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
           <TabsList>
             <TabsTrigger value="zonas">Zonas</TabsTrigger>
+            <TabsTrigger value="comparar">Comparar</TabsTrigger>
             <TabsTrigger value="financiero">Financiero</TabsTrigger>
             <TabsTrigger value="demografia">Demografía</TabsTrigger>
             <TabsTrigger value="flujos">Flujos</TabsTrigger>
             <TabsTrigger value="competencia">Competencia</TabsTrigger>
             <TabsTrigger value="demanda">Demanda</TabsTrigger>
             <TabsTrigger value="sensibilidad">Sensibilidad</TabsTrigger>
+            <TabsTrigger value="asesor">Asesor IA</TabsTrigger>
           </TabsList>
           <TabsContent value="zonas"><ZonasPanel /></TabsContent>
+          <TabsContent value="comparar"><ComparadorPanel /></TabsContent>
           <TabsContent value="financiero"><FinancialPanel /></TabsContent>
           <TabsContent value="demografia"><DemographicsPanel /></TabsContent>
           <TabsContent value="flujos"><FlowPanel /></TabsContent>
           <TabsContent value="competencia"><CompetitionPanel /></TabsContent>
           <TabsContent value="demanda"><DemandPanel /></TabsContent>
           <TabsContent value="sensibilidad"><SensitivityPanel /></TabsContent>
+          <TabsContent value="asesor"><AsesorPanel /></TabsContent>
         </Tabs>
       </aside>
     </div>

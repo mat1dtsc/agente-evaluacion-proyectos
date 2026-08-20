@@ -8,7 +8,8 @@ import { AnimatedKPI } from '../ui/AnimatedKPI';
 import { Button } from '../ui/Button';
 import { exportExcel } from '@/lib/export/exportExcel';
 import { exportWord } from '@/lib/export/exportWord';
-import { Download, FileSpreadsheet, TrendingUp, Target, Coins, Calendar, Activity, Banknote, Shield, Edit3 } from 'lucide-react';
+import { descargarInformePdf } from '@/lib/export/exportPdf';
+import { Download, FileSpreadsheet, FileText, TrendingUp, Target, Coins, Calendar, Activity, Banknote, Shield, Edit3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { UBICACIONES } from '@/lib/finance/cafeModel';
 
@@ -267,6 +268,10 @@ export function FinancialPanel() {
               <Button variant="outline" onClick={() => exportWord({ inputs, model, projectName, location })}>
                 <Download className="h-4 w-4" />
                 Exportar Word (informe)
+              </Button>
+              <Button variant="outline" onClick={() => descargarInformePdf({ inputs, model, projectName, location })}>
+                <FileText className="h-4 w-4" />
+                Exportar PDF (resumen ejecutivo)
               </Button>
             </>
           )}

@@ -51,7 +51,7 @@ export interface ProjectState {
   setProjectName: (s: string) => void;
 
   // Sincronización mapa ↔ paneles
-  activeTab: 'zonas' | 'demografia' | 'flujos' | 'competencia' | 'demanda' | 'financiero' | 'sensibilidad';
+  activeTab: 'zonas' | 'comparar' | 'demografia' | 'flujos' | 'competencia' | 'demanda' | 'financiero' | 'sensibilidad' | 'asesor';
   setActiveTab: (t: ProjectState['activeTab']) => void;
   highlightedComuna: string | null;
   setHighlightedComuna: (codigo: string | null) => void;
