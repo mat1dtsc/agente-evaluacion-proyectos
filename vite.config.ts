@@ -22,22 +22,10 @@ export default defineConfig({
   build: {
     sourcemap: false,
     chunkSizeWarningLimit: 700,
-    rollupOptions: {
-      output: {
-        // Manual chunks: separa dependencias pesadas para que el bundle inicial
-        // sea más pequeño y se cachéen mejor entre deploys.
-        manualChunks: {
-          'deck-gl': [
-            '@deck.gl/core', '@deck.gl/react', '@deck.gl/layers',
-            '@deck.gl/aggregation-layers', '@deck.gl/geo-layers',
-          ],
-          'leaflet': ['react-leaflet', 'leaflet'],
-          'charts': ['recharts'],
-          'animation': ['framer-motion'],
-          'export': ['xlsx', 'docx', 'jspdf', 'jspdf-autotable'],
-          'data-fetching': ['@tanstack/react-query'],
-        },
-      },
-    },
+    // Sin manualChunks: agrupar a mano obligaba a Rollup a declarar deck.gl y
+    // recharts como dependencias del entry, y volvian al modulepreload inicial
+    // aunque el mapa y los paneles ya se carguen con lazy(). Dejando que Rollup
+    // particione por el grafo real, cada chunk pesado queda detras de su
+    // import() y no entra en la carga inicial.
   },
 });

@@ -11,16 +11,10 @@
 
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { ProjectInputs, CashFlowYear } from '@/lib/finance/types';
-import type { FinancialModelOutput } from '@/hooks/useFinancialModel';
+import type { CashFlowYear } from '@/lib/finance/types';
 import { monteCarlo } from '@/lib/finance/monteCarlo';
 
-interface Args {
-  inputs: ProjectInputs;
-  model: FinancialModelOutput;
-  projectName: string;
-  location: { lat: number; lng: number; label?: string } | null;
-}
+import type { ExportArgs as Args } from './types';
 
 const fmtCLP = (v: number) =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(Math.round(v));

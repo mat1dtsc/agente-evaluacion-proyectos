@@ -1,6 +1,5 @@
 import * as XLSX from 'xlsx';
 import type { ProjectInputs } from '@/lib/finance/types';
-import type { FinancialModelOutput } from '@/hooks/useFinancialModel';
 import {
   computeCostoLaboral, planillaAnual, IMM_2025, TASAS_EMPLEADOR,
 } from '@/lib/finance/personal';
@@ -9,12 +8,7 @@ import {
   regimenTributarioSugerido, UF_2025, UTM_2025,
 } from '@/lib/finance/normativas';
 
-interface Args {
-  inputs: ProjectInputs;
-  model: FinancialModelOutput;
-  projectName: string;
-  location: { lat: number; lng: number; label?: string } | null;
-}
+import type { ExportArgs as Args } from './types';
 
 /**
  * Exporta el modelo financiero a un .xlsx con FÓRMULAS VIVAS.

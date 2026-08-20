@@ -2,8 +2,7 @@ import {
   Document, Packer, Paragraph, HeadingLevel, Table, TableRow, TableCell, TextRun,
   AlignmentType, WidthType, BorderStyle, ShadingType, PageBreak,
 } from 'docx';
-import type { CashFlowYear, ProjectInputs } from '@/lib/finance/types';
-import type { FinancialModelOutput } from '@/hooks/useFinancialModel';
+import type { CashFlowYear } from '@/lib/finance/types';
 import {
   computeCostoLaboral, planillaAnual, IMM_2025, TOPE_GRATIFICACION_ANUAL,
   TASAS_EMPLEADOR,
@@ -13,12 +12,7 @@ import {
   regimenTributarioSugerido, UF_2025,
 } from '@/lib/finance/normativas';
 
-interface Args {
-  inputs: ProjectInputs;
-  model: FinancialModelOutput;
-  projectName: string;
-  location: { lat: number; lng: number; label?: string } | null;
-}
+import type { ExportArgs as Args } from './types';
 
 const fmtCLP = (v: number) =>
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(Math.round(v));

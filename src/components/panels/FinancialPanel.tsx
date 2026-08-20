@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useFinancialModel } from '@/hooks/useFinancialModel';
 import { useProjectStore } from '@/store/projectStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
@@ -6,13 +7,11 @@ import { MonthlySparkline } from '../charts/MonthlySparkline';
 import { AssumptionsPanel } from './AssumptionsPanel';
 import { AnimatedKPI } from '../ui/AnimatedKPI';
 import { Button } from '../ui/Button';
-import { exportExcel } from '@/lib/export/exportExcel';
-import { exportWord } from '@/lib/export/exportWord';
-import { descargarInformePdf } from '@/lib/export/exportPdf';
 import { Download, FileSpreadsheet, FileText, TrendingUp, Target, Coins, Calendar, Activity, Banknote, Shield, Edit3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { UBICACIONES } from '@/lib/finance/cafeModel';
 import type { CashFlowYear } from '@/lib/finance/types';
+import type { ExportArgs } from '@/lib/export/types';
 
 export function FinancialPanel() {
   const inputs = useProjectStore((s) => s.inputs);
@@ -21,6 +20,21 @@ export function FinancialPanel() {
   const selectedLocationId = useProjectStore((s) => s.selectedLocationId);
   const setActiveTab = useProjectStore((s) => s.setActiveTab);
   const model = useFinancialModel();
+
+  // Los exportadores (xlsx + docx + jspdf, ~1 MB) se cargan bajo demanda al
+  // hacer click, no en el arranque de la app.
+  const [exportando, setExportando] = useState<'excel' | 'word' | 'pdf' | null>(null);
+  const correrExport = async (
+    tipo: 'excel' | 'word' | 'pdf',
+    ejecutar: (args: ExportArgs) => Promise<void>,
+  ) => {
+    setExportando(tipo);
+    try {
+      await ejecutar({ inputs, model, projectName, location });
+    } finally {
+      setExportando(null);
+    }
+  };
 
   const fp = model.flujoPuro;
   const fi = model.flujoInversionista;
@@ -262,17 +276,17 @@ export function FinancialPanel() {
             </>
           ) : (
             <>
-              <Button onClick={() => exportExcel({ inputs, model, projectName, location })}>
+              <Button disabled={exportando === 'excel'} onClick={() => correrExport('excel', async (a) => (await import('@/lib/export/exportExcel')).exportExcel(a))}>
                 <FileSpreadsheet className="h-4 w-4" />
-                Exportar Excel (con fórmulas vivas)
+                {exportando === 'excel' ? 'Generando Excel…' : 'Exportar Excel (con fórmulas vivas)'}
               </Button>
-              <Button variant="outline" onClick={() => exportWord({ inputs, model, projectName, location })}>
+              <Button variant="outline" disabled={exportando === 'word'} onClick={() => correrExport('word', async (a) => (await import('@/lib/export/exportWord')).exportWord(a))}>
                 <Download className="h-4 w-4" />
-                Exportar Word (informe)
+                {exportando === 'word' ? 'Generando Word…' : 'Exportar Word (informe)'}
               </Button>
-              <Button variant="outline" onClick={() => descargarInformePdf({ inputs, model, projectName, location })}>
+              <Button variant="outline" disabled={exportando === 'pdf'} onClick={() => correrExport('pdf', async (a) => (await import('@/lib/export/exportPdf')).descargarInformePdf(a))}>
                 <FileText className="h-4 w-4" />
-                Exportar PDF (resumen ejecutivo)
+                {exportando === 'pdf' ? 'Generando PDF…' : 'Exportar PDF (resumen ejecutivo)'}
               </Button>
             </>
           )}
