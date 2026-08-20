@@ -21,10 +21,12 @@ type NumFieldProps = {
  * remonta el <input>, que pierde el foco al teclear cada digito.
  */
 function NumField({ k, label, step, value, onChange }: NumFieldProps) {
+  const id = `supuesto-${k}`;
   return (
     <div>
-      <Label>{label}</Label>
+      <Label htmlFor={id}>{label}</Label>
       <Input
+        id={id}
         type="number"
         step={step ?? 1}
         value={value}
