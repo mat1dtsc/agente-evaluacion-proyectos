@@ -4,12 +4,12 @@
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![deck.gl](https://img.shields.io/badge/deck.gl-9.x-000?logo=mapbox&logoColor=white)](https://deck.gl/)
-[![Tests](https://img.shields.io/badge/tests-64%20passing-22c55e)](#)
+[![Tests](https://img.shields.io/badge/tests-147%20passing-22c55e)](#)
 [![License](https://img.shields.io/badge/license-Academic-orange)](#)
 
-SPA en React para evaluar **proyectos retail food en cualquier punto de Chile** combinando capas geográficas reales, modelo financiero a 60 períodos mensuales, marco normativo chileno y exportadores Word/Excel profesionales.
+SPA en React para evaluar **proyectos retail food en cualquier punto de Chile** combinando capas geográficas reales, modelo financiero a 60 períodos mensuales, marco normativo chileno, un **asesor IA** y exportadores Word/Excel/PDF profesionales.
 
-Construido como herramienta del curso **Evaluación de Proyectos** del MBA UAH 2026 (prof. Mauricio Zúñiga). El primer caso de uso es un café express con combo único, pero la herramienta es **genérica** para cualquier retail food.
+Construido como herramienta del curso **Evaluación de Proyectos** del MBA UAH 2026 (prof. Mauricio Zúñiga). El primer caso de uso es un café express con combo único, pero la herramienta es **genérica para cualquier retail food**: el catálogo incluye 13 formatos precargados en 7 rubros (café, comida rápida, heladería, panadería, restaurante, sushi, jugería).
 
 ---
 
@@ -70,23 +70,31 @@ npm run test:watch   # modo watch
 
 **Filtro temporal** (sidebar): tabs L-V/Sáb/Dom + slider hora 6-23 + mini-histograma bimodal. La intensidad del heatmap se modula en vivo.
 
-**6 paneles laterales** (con animaciones framer-motion + sincronización bidireccional con el mapa):
+**Pestañas laterales** (con animaciones framer-motion + sincronización bidireccional con el mapa):
 
 1. **Demografía** — header serif "Providencia" + score ring SVG con breakdown de 5 dimensiones + 6 micro-KPIs grid + pirámide etaria + ranking top 6 comunas RM con progress bars
 2. **Flujos** — control temporal in-panel + 2 KPIs vivos (peatonal/vehicular ahora) + curvas spline reactivas con día activo destacado y línea vertical en hora actual + paraderos en radio
 3. **Competencia** — total + cadena/independiente donut + lista ordenada por distancia (Starbucks, Café Haití, Tavelli, Pascucci...)
 4. **Demanda** — 3 factores editables (residentes activos, flujo/paradero, captura Metro) + 3 escenarios pesimista/base/optimista + benchmarks Procafé
-5. **Financiero** — 6 KPIs animados (CountUp) + cashflow chart + sparkline mensual a 60 períodos con marca de payback + tablas flujo puro/inversionista + assumptions inline + export Word/Excel
-6. **Sensibilidad** — tornado animado ±20% sobre 6 variables + heatmap precio×demanda
+5. **Financiero** — 6 KPIs animados (CountUp) + cashflow chart + sparkline mensual a 60 períodos con marca de payback + tablas flujo puro/inversionista + assumptions inline + export Word/Excel/PDF
+6. **Sensibilidad** — tornado animado ±20% sobre 6 variables + heatmap precio×demanda + **simulación Monte Carlo** (2.000 iteraciones con shocks conjuntos en demanda/precio/costo → P(VAN>0) y percentiles P5/P50/P95)
+7. **Comparar** — las 7 zonas RM lado a lado (score, VAN, TIR, payback, veredicto), ganadora destacada y sensible al escenario; click carga la zona en Financiero
+8. **Asesor IA** — recomendación ejecutiva (veredicto, fortalezas, riesgos, drivers, siguiente paso) sobre el caso actual. **Híbrido**: función serverless con Claude (API key server-side) + fallback determinístico por reglas que funciona sin API key
 
-### `/intro`
-Hero landing estilo dashboard pro con animaciones blur-slide stagger, badge MBA UAH, CTA "Probar con Las Condes" pre-seteo, stats grid (34 comunas, 62 estaciones, 7 fuentes, 64 tests), screenshot del dashboard como hero image y grid de 8 fuentes con hover reveal.
+> **Rutas:** la app es de página única. Las rutas antiguas (`/intro`, `/reports`, `/settings`) ahora redirigen al Dashboard (`/`); sus funciones (exportes, modo claro/oscuro, fuentes) viven integradas en las pestañas y el header.
 
-### `/reports`
-KPIs animados + descarga Word/Excel/share URL con estado serializado en query string.
+## 🤖 Asesor IA (`src/lib/advisor/` + `api/asesor.ts`)
 
-### `/settings`
-Modo claro/oscuro persistente + tasas tributarias defaults + 8 fuentes con badge "REAL".
+El Asesor lee el contexto completo de la evaluación (ubicación, score geográfico, finanzas VAN/TIR/payback, competencia, demanda y drivers de sensibilidad) y redacta una recomendación ejecutiva. Arquitectura **híbrida**:
+
+- **Con API key:** la función serverless `api/asesor.ts` (Vercel) llama a Claude con la `ANTHROPIC_API_KEY` guardada **server-side** (nunca expuesta al navegador) y devuelve la recomendación.
+- **Sin API key / en `vite dev`:** el hook `useAdvisor` cae automáticamente al **motor determinístico** (`deterministic.ts`), que produce el mismo informe estructurado por reglas — sin costo, sin key y reproducible.
+
+Para habilitar la IA: copia `.env.example` a `.env.local` y define `ANTHROPIC_API_KEY` (y en Vercel, en *Project Settings → Environment Variables*).
+
+## 🍔 Catálogo multi-rubro (`src/lib/finance/sectores.ts`)
+
+13 formatos retail food precargados con inversión desglosada, planilla con leyes sociales chilenas, demanda (pesimista/base/optimista), financiamiento y fuentes — agrupados por categoría en el onboarding (`SectorSelector`). Cubre café (7 formatos), comida rápida, heladería, panadería, restaurante, sushi y jugería.
 
 ## 💰 Modelo financiero (`src/lib/finance/`)
 
