@@ -1,4 +1,4 @@
-import { type ReactNode, createContext, useContext, useState, useEffect } from 'react';
+import { type ReactNode, createContext, useContext, useState } from 'react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -17,12 +17,10 @@ interface TabContextValue {
 const TabContext = createContext<TabContextValue | null>(null);
 
 export function Tabs({ defaultValue, value, onValueChange, children, className }: TabsProps) {
+  // `internal` solo gobierna el modo no controlado; cuando llega `value` desde
+  // arriba, ese prop manda directamente y no hay estado que sincronizar.
   const [internal, setInternal] = useState(defaultValue);
   const active = value ?? internal;
-
-  useEffect(() => {
-    if (value !== undefined) setInternal(value);
-  }, [value]);
 
   const setActive = (v: string) => {
     setInternal(v);

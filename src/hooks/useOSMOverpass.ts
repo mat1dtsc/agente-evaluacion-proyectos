@@ -56,6 +56,16 @@ export interface UrbanPOI {
 
 const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 
+/** Elemento crudo de Overpass: nodos traen lat/lon, ways con `out center` traen center. */
+interface OverpassRawElement {
+  type: 'node' | 'way' | 'relation';
+  id: number;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
+  tags?: Record<string, string>;
+}
+
 async function queryUrbanEquipment(): Promise<UrbanPOI[]> {
   // bbox RM amplio
   const bbox = '-33.85,-71.0,-33.15,-70.30';
@@ -81,7 +91,7 @@ async function queryUrbanEquipment(): Promise<UrbanPOI[]> {
   });
   if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`);
   const data = await res.json();
-  const elements: any[] = data.elements ?? [];
+  const elements: OverpassRawElement[] = data.elements ?? [];
   const out: UrbanPOI[] = [];
   for (const el of elements) {
     const lat = el.lat ?? el.center?.lat;
@@ -143,7 +153,7 @@ async function queryUrbanEquipmentNearby(
   });
   if (!res.ok) throw new Error(`Overpass HTTP ${res.status}`);
   const data = await res.json();
-  const elements: any[] = data.elements ?? [];
+  const elements: OverpassRawElement[] = data.elements ?? [];
   const out: UrbanPOI[] = [];
   for (const el of elements) {
     const lat = el.lat ?? el.center?.lat;

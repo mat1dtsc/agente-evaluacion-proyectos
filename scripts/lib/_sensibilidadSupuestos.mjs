@@ -8,7 +8,6 @@
  * Resultado: muestra el ranking de zonas con escenarios alternativos.
  */
 import {
-  calcularUbicacion, UBICACIONES, scoreUbicacion, veredicto,
   COSTOS_FIJOS_NO_LAB_TOTAL, PLANILLA_MENSUAL_TOTAL,
 } from './cafeModel.mjs';
 
@@ -18,7 +17,6 @@ const fmtM = (n) => {
   if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(0)}M`;
   return `${sign}$${(abs / 1_000).toFixed(0)}k`;
 };
-const pct = (n) => Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : '—';
 
 /**
  * Re-implementa calcularUbicacion permitiendo override de los supuestos
@@ -152,7 +150,6 @@ escenarios.forEach((esc) => {
   console.log('    ───┼─────────────────────────┼──────────');
   resultados.forEach((r, i) => {
     const marca = r.van > 30_000_000 ? '🟢' : r.van > 0 ? '🟡' : '🔴';
-    const positivas = resultados.filter((x) => x.van > 0).length;
     console.log(`    ${(i + 1).toString().padStart(2)} │ ${r.nombre.padEnd(23).slice(0, 23)} │ ${fmtM(r.van).padStart(7)}  ${marca}`);
   });
   const positivas = resultados.filter((r) => r.van > 0).length;

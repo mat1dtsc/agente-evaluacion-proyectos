@@ -6,6 +6,13 @@ export interface GeocoderResult {
   label: string;
 }
 
+/** Subconjunto de la respuesta de Nominatim que consumimos. */
+interface NominatimResult {
+  lat: string;
+  lon: string;
+  display_name: string;
+}
+
 export function useGeocoder() {
   const [results, setResults] = useState<GeocoderResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -22,7 +29,7 @@ export function useGeocoder() {
       const url = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=cl&limit=5&q=${encodeURIComponent(query)}`;
       const res = await fetch(url, { headers: { 'Accept-Language': 'es-CL' } });
       if (!res.ok) throw new Error(`Nominatim HTTP ${res.status}`);
-      const items: any[] = await res.json();
+      const items: NominatimResult[] = await res.json();
       setResults(
         items.map((it) => ({
           lat: parseFloat(it.lat),

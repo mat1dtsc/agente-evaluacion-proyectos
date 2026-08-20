@@ -1,4 +1,5 @@
 import { useProjectStore } from '@/store/projectStore';
+import type { ProjectInputs } from '@/lib/finance/types';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 import { Slider } from '../ui/Slider';
@@ -6,22 +7,40 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/Button';
 import { formatPct } from '@/lib/utils';
 
+type NumFieldProps = {
+  k: keyof ProjectInputs;
+  label: string;
+  step?: number;
+  value: number;
+  onChange: (k: keyof ProjectInputs, v: number) => void;
+};
+
+/**
+ * Declarado fuera de AssumptionsPanel a proposito: si se define dentro del
+ * render, React lo trata como un tipo de componente nuevo en cada render y
+ * remonta el <input>, que pierde el foco al teclear cada digito.
+ */
+function NumField({ k, label, step, value, onChange }: NumFieldProps) {
+  return (
+    <div>
+      <Label>{label}</Label>
+      <Input
+        type="number"
+        step={step ?? 1}
+        value={value}
+        onChange={(e) => onChange(k, Number(e.target.value))}
+      />
+    </div>
+  );
+}
+
 export function AssumptionsPanel() {
   const inputs = useProjectStore((s) => s.inputs);
   const upd = useProjectStore((s) => s.updateInputs);
   const reset = useProjectStore((s) => s.resetInputs);
 
-  const NumField = (props: { k: keyof typeof inputs; label: string; step?: number }) => (
-    <div>
-      <Label>{props.label}</Label>
-      <Input
-        type="number"
-        step={props.step ?? 1}
-        value={inputs[props.k] as number}
-        onChange={(e) => upd({ [props.k]: Number(e.target.value) } as any)}
-      />
-    </div>
-  );
+  const setField = (k: keyof ProjectInputs, v: number) =>
+    upd({ [k]: v } as Partial<ProjectInputs>);
 
   return (
     <Card>
@@ -35,17 +54,17 @@ export function AssumptionsPanel() {
           <span className="text-muted-foreground"> el modo libre usa valor terminal por Gordon Growth (perpetuidad creciente) y NO incluye comisión de tarjetas. Para evaluar zonas reales con todos los ajustes (comisión 2,8%, valor terminal 3,5x EBITDA, costos fijos auditados), selecciona una zona en el panel "Zonas".</span>
         </div>
         <div className="grid grid-cols-2 gap-2 text-xs">
-          <NumField k="inversionInicial" label="Inversión inicial (CLP)" step={100000} />
-          <NumField k="capitalTrabajo" label="Capital de trabajo (CLP)" step={100000} />
-          <NumField k="ticketPromedio" label="Ticket promedio (CLP)" step={100} />
-          <NumField k="costoVariableUnitario" label="Costo variable unit. (CLP)" step={50} />
-          <NumField k="costosFijosMensuales" label="Costos fijos mensuales (CLP)" step={50000} />
-          <NumField k="combosPorDiaBase" label="Combos/día base" />
-          <NumField k="diasOperacionAno" label="Días operación/año" />
-          <NumField k="vidaUtilAnos" label="Horizonte (años)" />
-          <NumField k="depreciacionAnos" label="Depreciación lineal (años)" />
-          <NumField k="valorResidual" label="Valor residual (CLP)" step={100000} />
-          <NumField k="crecimientoPerpetuidad" label="Crecimiento perpetuidad (g)" step={0.005} />
+          <NumField k="inversionInicial" label="Inversión inicial (CLP)" step={100000} value={inputs.inversionInicial} onChange={setField} />
+          <NumField k="capitalTrabajo" label="Capital de trabajo (CLP)" step={100000} value={inputs.capitalTrabajo} onChange={setField} />
+          <NumField k="ticketPromedio" label="Ticket promedio (CLP)" step={100} value={inputs.ticketPromedio} onChange={setField} />
+          <NumField k="costoVariableUnitario" label="Costo variable unit. (CLP)" step={50} value={inputs.costoVariableUnitario} onChange={setField} />
+          <NumField k="costosFijosMensuales" label="Costos fijos mensuales (CLP)" step={50000} value={inputs.costosFijosMensuales} onChange={setField} />
+          <NumField k="combosPorDiaBase" label="Combos/día base" value={inputs.combosPorDiaBase} onChange={setField} />
+          <NumField k="diasOperacionAno" label="Días operación/año" value={inputs.diasOperacionAno} onChange={setField} />
+          <NumField k="vidaUtilAnos" label="Horizonte (años)" value={inputs.vidaUtilAnos} onChange={setField} />
+          <NumField k="depreciacionAnos" label="Depreciación lineal (años)" value={inputs.depreciacionAnos} onChange={setField} />
+          <NumField k="valorResidual" label="Valor residual (CLP)" step={100000} value={inputs.valorResidual} onChange={setField} />
+          <NumField k="crecimientoPerpetuidad" label="Crecimiento perpetuidad (g)" step={0.005} value={inputs.crecimientoPerpetuidad} onChange={setField} />
         </div>
         <hr className="border-border" />
         <div className="space-y-2 text-xs">

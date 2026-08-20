@@ -12,6 +12,7 @@ import { descargarInformePdf } from '@/lib/export/exportPdf';
 import { Download, FileSpreadsheet, FileText, TrendingUp, Target, Coins, Calendar, Activity, Banknote, Shield, Edit3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { UBICACIONES } from '@/lib/finance/cafeModel';
+import type { CashFlowYear } from '@/lib/finance/types';
 
 export function FinancialPanel() {
   const inputs = useProjectStore((s) => s.inputs);
@@ -281,7 +282,7 @@ export function FinancialPanel() {
   );
 }
 
-function FlowTable({ cashFlow, showFinanciamiento }: { cashFlow: any[]; showFinanciamiento?: boolean }) {
+function FlowTable({ cashFlow, showFinanciamiento }: { cashFlow: CashFlowYear[]; showFinanciamiento?: boolean }) {
   const fmt = (v: number) => v === 0 ? '—' : `${(v / 1_000_000).toFixed(2)}M`;
   return (
     <div className="overflow-x-auto">

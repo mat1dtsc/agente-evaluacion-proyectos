@@ -9,7 +9,9 @@ const raw = JSON.parse(
 let l6Raw = { elements: [] };
 try {
   l6Raw = JSON.parse(readFileSync(new URL('./_cache/metro-l6.json', import.meta.url), 'utf8'));
-} catch {}
+} catch {
+  // Sin archivo de L6 en cache: se sigue con el resto de las lineas.
+}
 
 const COLORS = {
   L1:  [226, 3, 30],

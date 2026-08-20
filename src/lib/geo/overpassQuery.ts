@@ -44,7 +44,22 @@ export interface OverpassBusiness {
   detail?: string;
 }
 
-async function postOverpass(query: string): Promise<any[]> {
+/**
+ * Elemento crudo de la Overpass API. Solo declaramos los campos que leemos:
+ * los nodos traen lat/lon directo, y las vias con `out geom` traen `geometry`.
+ */
+interface OverpassElement {
+  type: 'node' | 'way' | 'relation';
+  id: number;
+  lat?: number;
+  lon?: number;
+  geometry?: { lat: number; lon: number }[];
+  /** Centroide que devuelve `out center` para ways y relations. */
+  center?: { lat: number; lon: number };
+  tags?: Record<string, string>;
+}
+
+async function postOverpass(query: string): Promise<OverpassElement[]> {
   const res = await fetch(OVERPASS_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -68,15 +83,18 @@ export async function queryCafes(center: { lat: number; lng: number }, radiusMet
     out body;
   `.trim();
   const elements = await postOverpass(query);
-  return elements.map((el: any) => ({
-    id: String(el.id),
-    lat: el.lat,
-    lng: el.lon,
-    name: el.tags?.name ?? 'Sin nombre',
-    type: el.tags?.amenity ?? el.tags?.shop ?? 'cafe',
-    brand: el.tags?.brand,
-    cuisine: el.tags?.cuisine,
-  }));
+  return elements.flatMap((el) => {
+    if (el.lat === undefined || el.lon === undefined) return [];
+    return [{
+      id: String(el.id),
+      lat: el.lat,
+      lng: el.lon,
+      name: el.tags?.name ?? 'Sin nombre',
+      type: el.tags?.amenity ?? el.tags?.shop ?? 'cafe',
+      brand: el.tags?.brand,
+      cuisine: el.tags?.cuisine,
+    }];
+  });
 }
 
 /**
@@ -98,7 +116,8 @@ export async function queryBusStops(center: { lat: number; lng: number }, radius
   const seen = new Set<string>();
   const out: OverpassBusStop[] = [];
   for (const el of elements) {
-    const key = `${el.tags?.name ?? el.id}-${el.lat?.toFixed(5)}-${el.lon?.toFixed(5)}`;
+    if (el.lat === undefined || el.lon === undefined) continue;
+    const key = `${el.tags?.name ?? el.id}-${el.lat.toFixed(5)}-${el.lon.toFixed(5)}`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push({
@@ -123,16 +142,17 @@ export async function queryTrafficStreetsRM(): Promise<OverpassRoadSegment[]> {
     out geom tags;
   `.trim();
   const elements = await postOverpass(query);
-  return elements
-    .filter((el: any) => el.geometry && el.geometry.length >= 2)
-    .map((el: any) => ({
+  return elements.flatMap((el) => {
+    if (!el.geometry || el.geometry.length < 2 || !el.tags?.highway) return [];
+    return [{
       id: String(el.id),
-      path: el.geometry.map((p: any) => [p.lon, p.lat]) as [number, number][],
-      name: el.tags?.name ?? el.tags?.ref ?? `way/${el.id}`,
-      highway: el.tags?.highway,
-      lanes: el.tags?.lanes,
-      maxspeed: el.tags?.maxspeed,
-    }));
+      path: el.geometry.map((p) => [p.lon, p.lat] as [number, number]),
+      name: el.tags.name ?? el.tags.ref ?? `way/${el.id}`,
+      highway: el.tags.highway,
+      lanes: el.tags.lanes,
+      maxspeed: el.tags.maxspeed,
+    }];
+  });
 }
 
 /**
@@ -149,16 +169,17 @@ export async function queryTrafficStreets(center: { lat: number; lng: number }, 
     out geom tags;
   `.trim();
   const elements = await postOverpass(query);
-  return elements
-    .filter((el: any) => el.geometry && el.geometry.length >= 2)
-    .map((el: any) => ({
+  return elements.flatMap((el) => {
+    if (!el.geometry || el.geometry.length < 2 || !el.tags?.highway) return [];
+    return [{
       id: String(el.id),
-      path: el.geometry.map((p: any) => [p.lon, p.lat]) as [number, number][],
-      name: el.tags?.name ?? el.tags?.ref ?? `way/${el.id}`,
-      highway: el.tags?.highway,
-      lanes: el.tags?.lanes,
-      maxspeed: el.tags?.maxspeed,
-    }));
+      path: el.geometry.map((p) => [p.lon, p.lat] as [number, number]),
+      name: el.tags.name ?? el.tags.ref ?? `way/${el.id}`,
+      highway: el.tags.highway,
+      lanes: el.tags.lanes,
+      maxspeed: el.tags.maxspeed,
+    }];
+  });
 }
 
 /**

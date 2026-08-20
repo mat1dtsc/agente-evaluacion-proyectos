@@ -13,11 +13,12 @@ import {
   type SourceMeta,
 } from '@/lib/data/loader';
 import type { FeatureCollection } from 'geojson';
+import type { ComunaGeometry, ComunaProps } from '@/lib/geo/zoneLookup';
 
 export function useComunasGeoJSON() {
   return useQuery({
     queryKey: ['comunas_chile.geojson'],
-    queryFn: () => loadDataset<FeatureCollection>('comunas_chile.geojson'),
+    queryFn: () => loadDataset<FeatureCollection<ComunaGeometry, ComunaProps>>('comunas_chile.geojson'),
     staleTime: Infinity,
   });
 }

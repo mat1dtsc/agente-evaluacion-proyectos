@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import DeckGL from '@deck.gl/react';
-import { MapView } from '@deck.gl/core';
-import { TileLayer } from '@deck.gl/geo-layers';
+import { type Layer, type MapViewState, type PickingInfo, MapView } from '@deck.gl/core';
+import { type GeoBoundingBox, TileLayer } from '@deck.gl/geo-layers';
 import { BitmapLayer, GeoJsonLayer, ScatterplotLayer, IconLayer, PolygonLayer, PathLayer } from '@deck.gl/layers';
 import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 import { METRO_COLORS } from '@/lib/geo/metroLines';
@@ -184,7 +184,7 @@ export function MapView3D({ containerClassName }: Props) {
     }));
   }, [location]);
 
-  const handleClick = useCallback((info: any) => {
+  const handleClick = useCallback((info: PickingInfo) => {
     if (!info?.coordinate) return;
     const [lng, lat] = info.coordinate;
     setLocation({ lat, lng });
@@ -198,7 +198,7 @@ export function MapView3D({ containerClassName }: Props) {
   }, [setLocation, setActiveTab, setHighlightedComuna]);
 
   // ============= Layers =============
-  const deckLayers: any[] = [];
+  const deckLayers: Layer[] = [];
 
   // Tile basemap (id por tema para evitar cache cruzada)
   deckLayers.push(
@@ -208,8 +208,9 @@ export function MapView3D({ containerClassName }: Props) {
       minZoom: 0,
       maxZoom: 19,
       tileSize: 256,
-      renderSubLayers: (props: any) => {
-        const { bbox } = props.tile;
+      renderSubLayers: (props) => {
+        // El basemap usa tiles geograficos, nunca el caso non-geo de la union.
+        const bbox = props.tile.bbox as GeoBoundingBox;
         return new BitmapLayer({
           ...props,
           data: undefined,
@@ -226,24 +227,24 @@ export function MapView3D({ containerClassName }: Props) {
     deckLayers.push(
       new GeoJsonLayer({
         id: 'densidad',
-        data: comunasGeo as any,
+        data: comunasGeo,
         extruded: is3D,
         wireframe: false,
         filled: true,
         stroked: true,
         opacity: is3D ? 0.85 : 1,
-        getFillColor: (f: any) => {
+        getFillColor: (f) => {
           const d = dataIndex.dens.get(f.properties.codigo)?.dens ?? 0;
           return densityToRGB(d, 22000);
         },
-        getLineColor: (f: any) => {
+        getLineColor: (f) => {
           if (f.properties.codigo === highlightedComuna) return [234, 88, 12, 255];
           return theme === 'dark' ? [255, 255, 255, 120] : [40, 40, 50, 180];
         },
-        getLineWidth: (f: any) => f.properties.codigo === highlightedComuna ? 3 : 1,
+        getLineWidth: (f) => f.properties.codigo === highlightedComuna ? 3 : 1,
         lineWidthMinPixels: 1,
         lineWidthUnits: 'pixels',
-        getElevation: (f: any) => {
+        getElevation: (f) => {
           const d = dataIndex.dens.get(f.properties.codigo)?.dens ?? 0;
           return is3D ? d * 0.04 : 0;
         },
@@ -266,11 +267,11 @@ export function MapView3D({ containerClassName }: Props) {
     deckLayers.push(
       new GeoJsonLayer({
         id: 'ingreso',
-        data: comunasGeo as any,
+        data: comunasGeo,
         extruded: false,
         filled: true,
         stroked: true,
-        getFillColor: (f: any) => {
+        getFillColor: (f) => {
           const v = dataIndex.ing.get(f.properties.codigo) ?? 0;
           return incomeToRGB(v, 4500000);
         },
@@ -289,7 +290,7 @@ export function MapView3D({ containerClassName }: Props) {
       new HeatmapLayer({
         id: 'peatonal-heat',
         data: busStopsRM,
-        getPosition: (d: any) => [d.lng, d.lat],
+        getPosition: (d) => [d.lng, d.lat],
         getWeight: hourlyIntensity,
         radiusPixels: 50,
         intensity: 1.0 + hourlyIntensity * 1.4,
@@ -327,10 +328,10 @@ export function MapView3D({ containerClassName }: Props) {
       new ScatterplotLayer({
         id: 'urban-equipment',
         data: urbanPois,
-        getPosition: (d: any) => [d.lng, d.lat],
-        getRadius: (d: any) => radiusByCategory(d.category),
+        getPosition: (d) => [d.lng, d.lat],
+        getRadius: (d) => radiusByCategory(d.category),
         radiusUnits: 'meters',
-        getFillColor: (d: any) => colorByCategory(d.category),
+        getFillColor: (d) => colorByCategory(d.category),
         getLineColor: [255, 255, 255, 220],
         lineWidthMinPixels: 1,
         stroked: true,
@@ -359,9 +360,9 @@ export function MapView3D({ containerClassName }: Props) {
       new PathLayer({
         id: 'roads-paths',
         data: roadData,
-        getPath: (d: any) => d.path,
-        getColor: (d: any) => colorByHighway(d.highway),
-        getWidth: (d: any) => widthByHighway(d.highway),
+        getPath: (d) => d.path,
+        getColor: (d) => colorByHighway(d.highway),
+        getWidth: (d) => widthByHighway(d.highway),
         widthUnits: 'pixels',
         widthMinPixels: 1,
         capRounded: true,
@@ -386,8 +387,8 @@ export function MapView3D({ containerClassName }: Props) {
         new PathLayer({
           id: 'metro-lines',
           data: segmentData,
-          getPath: (d: any) => d.path,
-          getColor: (d: any) => [...d.color, 240] as [number, number, number, number],
+          getPath: (d) => d.path,
+          getColor: (d) => [...d.color, 240] as [number, number, number, number],
           getWidth: 4,
           widthUnits: 'pixels',
           widthMinPixels: 2.5,
@@ -409,13 +410,13 @@ export function MapView3D({ containerClassName }: Props) {
         new ScatterplotLayer({
           id: 'metro-pins',
           data: metro.data,
-          getPosition: (d: any) => [d.lng, d.lat],
-          getRadius: (d: any) => 60 + d.afluenciaAnualM * 4,
+          getPosition: (d) => [d.lng, d.lat],
+          getRadius: (d) => 60 + d.afluenciaAnualM * 4,
           radiusUnits: 'meters',
           radiusMinPixels: 4,
           radiusMaxPixels: 12,
           getFillColor: [255, 255, 255, 250],
-          getLineColor: (d: any) => [...stationColor(d.linea), 255] as [number, number, number, number],
+          getLineColor: (d) => [...stationColor(d.linea), 255] as [number, number, number, number],
           lineWidthUnits: 'pixels',
           getLineWidth: 2,
           stroked: true,
@@ -433,8 +434,8 @@ export function MapView3D({ containerClassName }: Props) {
       new PathLayer({
         id: 'red-bus-routes',
         data: busRoutes.routes,
-        getPath: (d: any) => d.path,
-        getColor: (d: any) => [...d.color, 180] as [number, number, number, number],
+        getPath: (d) => d.path,
+        getColor: (d) => [...d.color, 180] as [number, number, number, number],
         getWidth: 2,
         widthUnits: 'pixels',
         widthMinPixels: 1.5,
@@ -452,7 +453,7 @@ export function MapView3D({ containerClassName }: Props) {
       new ScatterplotLayer({
         id: 'paraderos',
         data: busStops,
-        getPosition: (d: any) => [d.lng, d.lat],
+        getPosition: (d) => [d.lng, d.lat],
         getRadius: 15,
         radiusUnits: 'meters',
         getFillColor: [14, 165, 233, 230],
@@ -470,7 +471,7 @@ export function MapView3D({ containerClassName }: Props) {
       new ScatterplotLayer({
         id: 'cafes',
         data: cafes,
-        getPosition: (d: any) => [d.lng, d.lat],
+        getPosition: (d) => [d.lng, d.lat],
         getRadius: 22,
         radiusUnits: 'meters',
         getFillColor: [251, 191, 36, 240],
@@ -488,7 +489,7 @@ export function MapView3D({ containerClassName }: Props) {
       new ScatterplotLayer({
         id: 'mi-local-halo',
         data: [location],
-        getPosition: (d: any) => [d.lng, d.lat],
+        getPosition: (d) => [d.lng, d.lat],
         getRadius: radius,
         radiusUnits: 'meters',
         getFillColor: [234, 88, 12, 30],
@@ -502,7 +503,7 @@ export function MapView3D({ containerClassName }: Props) {
       new ScatterplotLayer({
         id: 'mi-local-core',
         data: [location],
-        getPosition: (d: any) => [d.lng, d.lat],
+        getPosition: (d) => [d.lng, d.lat],
         getRadius: 60,
         radiusUnits: 'meters',
         getFillColor: [234, 88, 12, 255],
@@ -527,15 +528,15 @@ export function MapView3D({ containerClassName }: Props) {
     new ScatterplotLayer({
       id: 'zonas-halo',
       data: zonasPreEvaluadas,
-      getPosition: (d: any) => [d.lng, d.lat],
+      getPosition: (d) => [d.lng, d.lat],
       // El radio crece con score (mejor zona = halo más grande)
-      getRadius: (d: any) => 280 + (d.score / 100) * 320,
+      getRadius: (d) => 280 + (d.score / 100) * 320,
       radiusUnits: 'meters',
-      getFillColor: (d: any) => {
+      getFillColor: (d) => {
         const c = colorPorVeredicto[d.veredicto] ?? [156, 163, 175, 100];
         return [c[0], c[1], c[2], 60];
       },
-      getLineColor: (d: any) => {
+      getLineColor: (d) => {
         const c = colorPorVeredicto[d.veredicto] ?? [156, 163, 175, 200];
         return [c[0], c[1], c[2], 200];
       },
@@ -543,7 +544,7 @@ export function MapView3D({ containerClassName }: Props) {
       stroked: true,
       filled: true,
       pickable: true,
-      onClick: (info: any) => {
+      onClick: (info) => {
         if (info.object?.id) {
           setSelectedLocationId(info.object.id);
           setLocation({ lat: info.object.lat, lng: info.object.lng, label: info.object.nombre });
@@ -557,17 +558,17 @@ export function MapView3D({ containerClassName }: Props) {
     new ScatterplotLayer({
       id: 'zonas-core',
       data: zonasPreEvaluadas,
-      getPosition: (d: any) => [d.lng, d.lat],
-      getRadius: (d: any) => (selectedLocationId === d.id ? 130 : 90),
+      getPosition: (d) => [d.lng, d.lat],
+      getRadius: (d) => (selectedLocationId === d.id ? 130 : 90),
       radiusUnits: 'meters',
-      getFillColor: (d: any) => colorPorVeredicto[d.veredicto] ?? [156, 163, 175, 220],
+      getFillColor: (d) => colorPorVeredicto[d.veredicto] ?? [156, 163, 175, 220],
       getLineColor: () => [255, 255, 255, 255],
       lineWidthMinPixels: 2.5,
       stroked: true,
       filled: true,
       pickable: true,
       updateTriggers: { getRadius: [selectedLocationId] },
-      onClick: (info: any) => {
+      onClick: (info) => {
         if (info.object?.id) {
           setSelectedLocationId(info.object.id);
           setLocation({ lat: info.object.lat, lng: info.object.lng, label: info.object.nombre });
@@ -578,7 +579,7 @@ export function MapView3D({ containerClassName }: Props) {
   );
 
   // Tooltip
-  const getTooltip = ({ object, layer }: any) => {
+  const getTooltip = ({ object, layer }: PickingInfo) => {
     if (!object) return null;
     // Tooltips de zonas pre-evaluadas
     if (layer?.id === 'zonas-core' || layer?.id === 'zonas-halo') {
@@ -691,14 +692,26 @@ export function MapView3D({ containerClassName }: Props) {
     >
       <DeckGL
         key={`deck-${theme}`}
-        initialViewState={viewState as any}
-        viewState={viewState as any}
-        onViewStateChange={(e: any) => setViewState(e.viewState)}
-        controller={{ dragRotate: true, touchRotate: true } as any}
+        initialViewState={viewState}
+        viewState={viewState}
+        onViewStateChange={(e) => {
+          // deck.gl deja pitch/bearing opcionales; el estado local los exige siempre.
+          const v = e.viewState as MapViewState;
+          setViewState((prev) => ({
+            ...prev,
+            longitude: v.longitude,
+            latitude: v.latitude,
+            zoom: v.zoom,
+            pitch: v.pitch ?? prev.pitch,
+            bearing: v.bearing ?? prev.bearing,
+            transitionDuration: 0,
+          }));
+        }}
+        controller={{ dragRotate: true, touchRotate: true }}
         layers={deckLayers}
         onClick={handleClick}
         getTooltip={getTooltip}
-        views={new MapView({ controller: true, repeat: true } as any)}
+        views={new MapView({ controller: true, repeat: true })}
         style={{ position: 'absolute', top: '0', left: '0', right: '0', bottom: '0' }}
       />
 

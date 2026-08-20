@@ -1,8 +1,8 @@
-import { useProjectStore } from '@/store/projectStore';
+import { useProjectStore, type ProjectState } from '@/store/projectStore';
 import { Layers } from 'lucide-react';
 
 const LAYERS: Array<{
-  key: keyof ReturnType<typeof getLayers>;
+  key: keyof ProjectState['activeLayers'];
   label: string;
   source: string;
   swatch: 'gradient' | 'dot';
@@ -19,10 +19,6 @@ const LAYERS: Array<{
   { key: 'equipamiento', label: 'Equipamiento urbano',      source: 'OSM · hosp/u/colegios', swatch: 'dot', dotColor: 'bg-violet-500' },
   { key: 'busRoutes',    label: 'Rutas RED Movilidad',      source: 'OSM · 222 líneas',      swatch: 'gradient', gradient: 'from-red-500 via-yellow-400 to-blue-500' },
 ];
-
-function getLayers() {
-  return useProjectStore.getState().activeLayers;
-}
 
 export function LayerControls() {
   const layers = useProjectStore((s) => s.activeLayers);

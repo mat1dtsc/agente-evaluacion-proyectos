@@ -15,8 +15,7 @@ import {
   COMISION_TARJETAS, HORIZONTE_ANOS, DIAS_OPER_ANO, CARGAS,
   PLANILLA, PLANILLA_MENSUAL_TOTAL, COSTOS_FIJOS_NO_LAB,
   COSTOS_FIJOS_NO_LAB_TOTAL, INVERSION, CAPEX, VIDA_PROMEDIO, DEP_ANUAL,
-  UBICACIONES, calcularUbicacion, calcularTodas, scoreUbicacion, veredicto,
-  costoEmpresa,
+  calcularTodas,
 } from '../lib/cafeModel.mjs';
 
 // ============================================================
@@ -28,10 +27,6 @@ const intFmt = '#,##0';
 const ufFmt = '0.000';
 
 function setColWidths(ws, widths) { ws['!cols'] = widths.map((w) => ({ wch: w })); }
-function setRowHeight(ws, idx, h) {
-  ws['!rows'] = ws['!rows'] || [];
-  ws['!rows'][idx] = { hpx: h };
-}
 
 // ============================================================
 // CALCULAR TODAS LAS UBICACIONES (usa modelo central)

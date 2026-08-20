@@ -21,7 +21,7 @@
  * Uso: node scripts/pptx/generarPitchDeck.mjs
  */
 import pptxgen from 'pptxgenjs';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import {
   calcularTodas, scoreUbicacion, veredicto,
   TCC, MULT_EBITDA_TERMINAL, COMISION_TARJETAS,

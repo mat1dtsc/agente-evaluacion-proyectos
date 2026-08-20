@@ -2,7 +2,7 @@ import {
   Document, Packer, Paragraph, HeadingLevel, Table, TableRow, TableCell, TextRun,
   AlignmentType, WidthType, BorderStyle, ShadingType, PageBreak,
 } from 'docx';
-import type { ProjectInputs } from '@/lib/finance/types';
+import type { CashFlowYear, ProjectInputs } from '@/lib/finance/types';
 import type { FinancialModelOutput } from '@/hooks/useFinancialModel';
 import {
   computeCostoLaboral, planillaAnual, IMM_2025, TOPE_GRATIFICACION_ANUAL,
@@ -523,7 +523,7 @@ function tableFromRows(rows: string[][]): Table {
     ),
   });
 }
-function flujoTable(cashFlow: any[], conFinanc: boolean): Table {
+function flujoTable(cashFlow: CashFlowYear[], conFinanc: boolean): Table {
   const head = ['Concepto', ...cashFlow.map((y) => `Año ${y.ano}`)];
   const rows = [
     head,

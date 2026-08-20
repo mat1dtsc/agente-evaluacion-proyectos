@@ -26,7 +26,7 @@ export function DemographicsPanel() {
   const { data: busStopsLocal } = useBusStopsNearby(location, radius);
   const { data: urbanRM } = useUrbanEquipmentRM(true);
 
-  const comuna = useMemo(() => location ? findComuna(location, comunas as any) : null, [location, comunas]);
+  const comuna = useMemo(() => location ? findComuna(location, comunas ?? null) : null, [location, comunas]);
   const dens = comuna && densidad?.data.find((d) => d.codigo === comuna.properties.codigo);
   const ing = comuna && casen?.data.find((d) => d.codigo === comuna.properties.codigo);
 

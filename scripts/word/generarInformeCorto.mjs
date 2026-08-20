@@ -15,13 +15,13 @@
  */
 import {
   Document, Packer, Paragraph, HeadingLevel, Table, TableRow, TableCell, TextRun,
-  AlignmentType, WidthType, BorderStyle, ShadingType, PageBreak, Footer, Header,
+  AlignmentType, WidthType, BorderStyle, ShadingType, Footer, Header,
   PageNumber,
 } from 'docx';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import {
   calcularTodas, scoreUbicacion, veredicto, TCC, MULT_EBITDA_TERMINAL,
-  COMISION_TARJETAS, CAPEX,
+  COMISION_TARJETAS,
 } from '../lib/cafeModel.mjs';
 
 const FONT_HEAD = 'Cambria';
@@ -64,16 +64,6 @@ function p(text, opts = {}) {
     children: [new TextRun({
       text, size: opts.size ?? 20, font: FONT_BODY,
       bold: opts.bold, italics: opts.italic, color: opts.color,
-    })],
-  });
-}
-function bullet(text, opts = {}) {
-  return new Paragraph({
-    spacing: { after: 40, line: 260 },
-    bullet: { level: 0 },
-    children: [new TextRun({
-      text, size: 20, font: FONT_BODY,
-      bold: opts.bold,
     })],
   });
 }

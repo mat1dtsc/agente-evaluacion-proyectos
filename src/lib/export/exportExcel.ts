@@ -22,11 +22,17 @@ interface Args {
  * (=NPV, =IRR, =SUMA, =SI, etc.), no valores duros — abrir en Excel y modificar
  * un input recalcula VAN/TIR automáticamente.
  */
+/**
+ * Celda tal como la consume `XLSX.utils.aoa_to_sheet`: un valor plano o, para
+ * las formulas que dejamos vivas en el libro, el objeto { f, t } de SheetJS.
+ */
+type CeldaExcel = string | number | boolean | null | undefined | { f: string; t?: string };
+
 export function exportExcel({ inputs, model, projectName, location }: Args): void {
   const wb = XLSX.utils.book_new();
 
   // -------- Hoja Inputs --------
-  const inputRows: any[][] = [
+  const inputRows: CeldaExcel[][] = [
     ['Proyecto', projectName],
     ['Ubicación', location ? `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}` : '—'],
     ['Generado', new Date().toISOString()],
@@ -74,7 +80,7 @@ export function exportExcel({ inputs, model, projectName, location }: Args): voi
 
   // -------- Hoja Personal (planilla con leyes sociales chilenas) --------
   if (inputs.personal && inputs.personal.length > 0) {
-    const personalRows: any[][] = [
+    const personalRows: CeldaExcel[][] = [
       ['Cargo', 'Cantidad', 'Bruto/mes', 'AFC empleador (2.4%)', 'SIS (1.85%)', 'Mutual (0.95%)', 'Gratif. legal', 'Prov. vacaciones', 'Prov. indemnización', 'Costo total/mes/persona', 'Costo total/mes', 'Costo total/año', 'Factor x'],
     ];
     for (const c of inputs.personal) {
@@ -101,7 +107,7 @@ export function exportExcel({ inputs, model, projectName, location }: Args): voi
   }
 
   // -------- Hoja Normativas (permisos y obligaciones chilenas) --------
-  const normRows: any[][] = [
+  const normRows: CeldaExcel[][] = [
     ['Norma', 'Organismo', 'Tipo', 'Costo CLP', 'Obligatorio', 'Base legal', 'Trámite'],
   ];
   for (const n of NORMATIVAS_RETAIL_FOOD) {
@@ -129,7 +135,7 @@ export function exportExcel({ inputs, model, projectName, location }: Args): voi
 
   // -------- Hoja Flujo Mensual (60 períodos) --------
   if (model.flujoMensualPuro) {
-    const monthlyRows: any[][] = [
+    const monthlyRows: CeldaExcel[][] = [
       ['Mes', 'Año', 'Mes en año', 'Ingresos', 'Costos variables', 'Costos fijos no laborales', 'Costo personal', 'Costos normativos', 'Depreciación', 'Intereses', 'UAI', 'Impuesto', 'UDI', 'Flujo operacional', 'Inversión', 'Capital trabajo', 'Recupero CT', 'Valor residual', 'Préstamo', 'Amortización deuda', 'Flujo neto'],
     ];
     for (const m of model.flujoMensualPuro.cashFlowMonthly) {
@@ -150,7 +156,7 @@ export function exportExcel({ inputs, model, projectName, location }: Args): voi
   }
 
   // -------- Hoja IVA (modelado separado) --------
-  const ivaRows: any[][] = [
+  const ivaRows: CeldaExcel[][] = [
     ['IVA — DL 825/74 · Tasa 19%'],
     [''],
     ['NOTA: el flujo principal trabaja en valores netos. El IVA débito (sobre ventas) se compensa mensualmente con el IVA crédito (sobre compras) y se declara en Form 29 antes del día 12 del mes siguiente.'],
@@ -166,7 +172,7 @@ export function exportExcel({ inputs, model, projectName, location }: Args): voi
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ivaRows), 'IVA');
 
   // -------- Hoja Sensibilidad --------
-  const sensRows: any[][] = [['Variable', 'Delta', 'VAN puro', 'VAN inversionista', 'Impacto VAN puro']];
+  const sensRows: CeldaExcel[][] = [['Variable', 'Delta', 'VAN puro', 'VAN inversionista', 'Impacto VAN puro']];
   for (const r of model.sensitivity) {
     sensRows.push([r.variable, r.delta, r.vanPuro, r.vanInversionista, r.impactoVanPuro]);
   }
@@ -205,7 +211,7 @@ export function exportExcel({ inputs, model, projectName, location }: Args): voi
 function construirHojaFlujoExcel(inputs: ProjectInputs, conDeuda: boolean): XLSX.WorkSheet {
   const N = inputs.vidaUtilAnos;
   const cols: string[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
-  const rows: any[][] = [];
+  const rows: CeldaExcel[][] = [];
 
   // Encabezado
   const headers = ['Concepto', ...Array.from({ length: N + 1 }, (_, i) => `Año ${i}`)];
@@ -215,14 +221,14 @@ function construirHojaFlujoExcel(inputs: ProjectInputs, conDeuda: boolean): XLSX
   rows.push(['Tasa impuesto', { f: 'Inputs!B15', t: 'n' }]);  // fila 4
 
   // Fila 5: Combos/día (col B = año 0 vacío)
-  const combosRow: any[] = ['Combos/día', ''];
+  const combosRow: CeldaExcel[] = ['Combos/día', ''];
   for (let t = 1; t <= N; t += 1) {
     combosRow.push({ f: `Inputs!B9*((1+Inputs!B11)^${t - 1})`, t: 'n' });
   }
   rows.push(combosRow);
 
   // Fila 6: Ingresos
-  const ingresosRow: any[] = ['Ingresos', 0];
+  const ingresosRow: CeldaExcel[] = ['Ingresos', 0];
   for (let t = 1; t <= N; t += 1) {
     const c = cols[t + 1]; // col del año t (B=año0, C=año1, ...)
     ingresosRow.push({ f: `${c}5*Inputs!B10*Inputs!B12`, t: 'n' });
@@ -230,7 +236,7 @@ function construirHojaFlujoExcel(inputs: ProjectInputs, conDeuda: boolean): XLSX
   rows.push(ingresosRow);
 
   // Fila 7: Costos variables
-  const cvRow: any[] = ['Costos variables', 0];
+  const cvRow: CeldaExcel[] = ['Costos variables', 0];
   for (let t = 1; t <= N; t += 1) {
     const c = cols[t + 1];
     cvRow.push({ f: `${c}5*Inputs!B10*Inputs!B13`, t: 'n' });
@@ -238,19 +244,19 @@ function construirHojaFlujoExcel(inputs: ProjectInputs, conDeuda: boolean): XLSX
   rows.push(cvRow);
 
   // Fila 8: Costos fijos
-  const cfRow: any[] = ['Costos fijos', 0];
+  const cfRow: CeldaExcel[] = ['Costos fijos', 0];
   for (let t = 1; t <= N; t += 1) cfRow.push({ f: `Inputs!B14*12`, t: 'n' });
   rows.push(cfRow);
 
   // Fila 9: Depreciación
-  const depRow: any[] = ['Depreciación', 0];
+  const depRow: CeldaExcel[] = ['Depreciación', 0];
   for (let t = 1; t <= N; t += 1) {
     depRow.push(t <= inputs.depreciacionAnos ? { f: `Inputs!B6/Inputs!B20`, t: 'n' } : 0);
   }
   rows.push(depRow);
 
   // Fila 10: Intereses (sólo inversionista — schedule francés simplificado)
-  const intRow: any[] = ['Intereses', 0];
+  const intRow: CeldaExcel[] = ['Intereses', 0];
   if (conDeuda) {
     // Saldo inicial = Inversion * %deuda; intereses_t = saldo_t * tasa_banco
     // Aproximamos con interés simple decreciente lineal (cuota constante exacta no cabe en una sola fórmula sin tabla aux)
@@ -269,7 +275,7 @@ function construirHojaFlujoExcel(inputs: ProjectInputs, conDeuda: boolean): XLSX
   rows.push(intRow);
 
   // Fila 11: UAI
-  const uaiRow: any[] = ['UAI', 0];
+  const uaiRow: CeldaExcel[] = ['UAI', 0];
   for (let t = 1; t <= N; t += 1) {
     const c = cols[t + 1];
     uaiRow.push({ f: `${c}6 - ${c}7 - ${c}8 - ${c}9 - ${c}10`, t: 'n' });
@@ -277,7 +283,7 @@ function construirHojaFlujoExcel(inputs: ProjectInputs, conDeuda: boolean): XLSX
   rows.push(uaiRow);
 
   // Fila 12: Impuesto = MAX(0, UAI*tasa)
-  const taxRow: any[] = ['Impuesto', 0];
+  const taxRow: CeldaExcel[] = ['Impuesto', 0];
   for (let t = 1; t <= N; t += 1) {
     const c = cols[t + 1];
     taxRow.push({ f: `MAX(0, ${c}11*$B$4)`, t: 'n' });
@@ -285,7 +291,7 @@ function construirHojaFlujoExcel(inputs: ProjectInputs, conDeuda: boolean): XLSX
   rows.push(taxRow);
 
   // Fila 13: Utilidad neta
-  const netRow: any[] = ['Utilidad neta', 0];
+  const netRow: CeldaExcel[] = ['Utilidad neta', 0];
   for (let t = 1; t <= N; t += 1) {
     const c = cols[t + 1];
     netRow.push({ f: `${c}11 - ${c}12`, t: 'n' });
@@ -293,7 +299,7 @@ function construirHojaFlujoExcel(inputs: ProjectInputs, conDeuda: boolean): XLSX
   rows.push(netRow);
 
   // Fila 14: Flujo operacional = Utilidad neta + Depreciación
-  const foRow: any[] = ['Flujo operacional', 0];
+  const foRow: CeldaExcel[] = ['Flujo operacional', 0];
   for (let t = 1; t <= N; t += 1) {
     const c = cols[t + 1];
     foRow.push({ f: `${c}13 + ${c}9`, t: 'n' });
@@ -301,29 +307,29 @@ function construirHojaFlujoExcel(inputs: ProjectInputs, conDeuda: boolean): XLSX
   rows.push(foRow);
 
   // Filas 15-19: Movimientos de inversión / CT / valor residual / deuda
-  const invRow: any[] = ['Inversión'];
+  const invRow: CeldaExcel[] = ['Inversión'];
   invRow.push({ f: `-Inputs!B6`, t: 'n' });
   for (let t = 1; t <= N; t += 1) invRow.push(0);
   rows.push(invRow);
 
-  const ctRow: any[] = ['Capital trabajo'];
+  const ctRow: CeldaExcel[] = ['Capital trabajo'];
   ctRow.push({ f: `-Inputs!B7`, t: 'n' });
   for (let t = 1; t <= N; t += 1) ctRow.push(0);
   rows.push(ctRow);
 
-  const recRow: any[] = ['Recupero CT'];
+  const recRow: CeldaExcel[] = ['Recupero CT'];
   recRow.push(0);
   for (let t = 1; t <= N - 1; t += 1) recRow.push(0);
   recRow.push({ f: `Inputs!B7`, t: 'n' });
   rows.push(recRow);
 
-  const vrRow: any[] = ['Valor residual'];
+  const vrRow: CeldaExcel[] = ['Valor residual'];
   vrRow.push(0);
   for (let t = 1; t <= N - 1; t += 1) vrRow.push(0);
   vrRow.push({ f: `Inputs!B21*(1-Inputs!B15)`, t: 'n' });
   rows.push(vrRow);
 
-  const deudaRow: any[] = ['Préstamo / amortización'];
+  const deudaRow: CeldaExcel[] = ['Préstamo / amortización'];
   if (conDeuda) {
     deudaRow.push({ f: `Inputs!B6*Inputs!B17`, t: 'n' });
     for (let t = 1; t <= N; t += 1) {
@@ -339,7 +345,7 @@ function construirHojaFlujoExcel(inputs: ProjectInputs, conDeuda: boolean): XLSX
   rows.push(deudaRow);
 
   // Fila 20: Flujo de caja neto = FO + Inv + CT + Rec + VR + Deuda
-  const fcnRow: any[] = ['Flujo neto', { f: `B14 + B15 + B16 + B17 + B18 + B19`, t: 'n' }];
+  const fcnRow: CeldaExcel[] = ['Flujo neto', { f: `B14 + B15 + B16 + B17 + B18 + B19`, t: 'n' }];
   for (let t = 1; t <= N; t += 1) {
     const c = cols[t + 1];
     fcnRow.push({ f: `${c}14 + ${c}15 + ${c}16 + ${c}17 + ${c}18 + ${c}19`, t: 'n' });

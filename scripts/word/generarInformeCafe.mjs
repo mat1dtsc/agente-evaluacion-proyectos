@@ -10,19 +10,18 @@
 import {
   Document, Packer, Paragraph, HeadingLevel, Table, TableRow, TableCell, TextRun,
   AlignmentType, WidthType, BorderStyle, ShadingType, PageBreak, Footer, Header,
-  PageNumber, NumberFormat, LevelFormat, TableOfContents, Tab,
+  PageNumber,
 } from 'docx';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import {
   calcularTodas, scoreUbicacion, veredicto, TCC, MULT_EBITDA_TERMINAL,
-  G_DEMANDA, COMISION_TARJETAS, COSTOS_FIJOS_NO_LAB_TOTAL, PLANILLA_MENSUAL_TOTAL,
+  COMISION_TARJETAS,
 } from '../lib/cafeModel.mjs';
 
 // Modelo corregido — cálculos compartidos con Excel y app web
 const RESULTADOS = calcularTodas();
 RESULTADOS.sort((a, b) => b.base.van - a.base.van);
 const GANADORA = RESULTADOS[0];
-const fmt = (n) => '$' + Math.round(n).toLocaleString('es-CL');
 const fmtM = (n) => {
   const abs = Math.abs(n);
   const sign = n < 0 ? '−' : '';

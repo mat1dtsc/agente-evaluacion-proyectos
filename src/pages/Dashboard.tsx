@@ -9,7 +9,7 @@ import { FinancialPanel } from '@/components/panels/FinancialPanel';
 import { SensitivityPanel } from '@/components/panels/SensitivityPanel';
 import { ComparadorPanel } from '@/components/panels/ComparadorPanel';
 import { AsesorPanel } from '@/components/panels/AsesorPanel';
-import { useProjectStore } from '@/store/projectStore';
+import { type ProjectState, useProjectStore } from '@/store/projectStore';
 
 export default function Dashboard() {
   const activeTab = useProjectStore((s) => s.activeTab);
@@ -21,7 +21,7 @@ export default function Dashboard() {
         <MapView />
       </div>
       <aside className="overflow-hidden border-l bg-card">
-        <Tabs defaultValue="zonas" value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+        <Tabs defaultValue="zonas" value={activeTab} onValueChange={(v) => setActiveTab(v as ProjectState['activeTab'])}>
           <TabsList>
             <TabsTrigger value="zonas">Zonas</TabsTrigger>
             <TabsTrigger value="comparar">Comparar</TabsTrigger>

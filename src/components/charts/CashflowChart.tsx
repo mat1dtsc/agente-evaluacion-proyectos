@@ -6,11 +6,11 @@ interface Props {
 }
 
 export function CashflowChart({ cashFlow }: Props) {
-  let acc = 0;
-  const data = cashFlow.map((y) => {
-    acc += y.flujoCajaNeto;
-    return { ano: `Año ${y.ano}`, anual: Math.round(y.flujoCajaNeto), acumulado: Math.round(acc) };
-  });
+  const data = cashFlow.reduce<{ ano: string; anual: number; acumulado: number }[]>((rows, y) => {
+    const acumulado = (rows.at(-1)?.acumulado ?? 0) + y.flujoCajaNeto;
+    rows.push({ ano: `Año ${y.ano}`, anual: Math.round(y.flujoCajaNeto), acumulado: Math.round(acumulado) });
+    return rows;
+  }, []);
   return (
     <ResponsiveContainer width="100%" height={240}>
       <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>

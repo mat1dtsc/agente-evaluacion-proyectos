@@ -12,17 +12,17 @@ interface Props {
  * y la curva de recuperación.
  */
 export function MonthlySparkline({ cashFlow, height = 140 }: Props) {
-  let acc = 0;
-  const data = cashFlow.map((m) => {
-    acc += m.flujoCajaNeto;
-    return {
+  type Punto = { mes: number; ano: number; label: string; anual: number; acumulado: number };
+  const data = cashFlow.reduce<Punto[]>((rows, m) => {
+    rows.push({
       mes: m.mes,
       ano: m.ano,
       label: m.mes === 0 ? 'Inv' : `M${m.mes} (A${m.ano})`,
       anual: m.flujoCajaNeto,
-      acumulado: acc,
-    };
-  });
+      acumulado: (rows.at(-1)?.acumulado ?? 0) + m.flujoCajaNeto,
+    });
+    return rows;
+  }, []);
 
   // Encontrar el mes de payback (cruce a positivo)
   const paybackMonth = data.find((d) => d.acumulado >= 0 && d.mes > 0)?.mes;
@@ -55,7 +55,7 @@ export function MonthlySparkline({ cashFlow, height = 140 }: Props) {
             borderRadius: 8,
           }}
           formatter={(v: number) => `$${(v / 1_000_000).toFixed(1)}M`}
-          labelFormatter={(_label: any, payload: any) => {
+          labelFormatter={(_label, payload: { payload?: Punto }[]) => {
             const d = payload?.[0]?.payload;
             return d ? `Mes ${d.mes} · Año ${d.ano}` : '';
           }}

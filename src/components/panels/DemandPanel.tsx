@@ -36,7 +36,7 @@ export function DemandPanel() {
 
   const flujoDiario = useMemo(() => {
     if (!location) return 0;
-    const comuna = findComuna(location, comunas as any);
+    const comuna = findComuna(location, comunas ?? null);
     const dens = comuna && densidad?.data.find((d) => d.codigo === comuna.properties.codigo);
     const areaKm2 = Math.PI * Math.pow(radius / 1000, 2);
     const poblacionRadio = dens ? dens.densidad * areaKm2 : 0;
@@ -61,9 +61,9 @@ export function DemandPanel() {
 
   const benchmarks = procafe?.data.tasaCapturaTipica ?? {};
 
-  if (!location) return <NoLocationPlaceholder message="Selecciona un punto para estimar la demanda en su radio." />;
-
   const [showSectorSelector, setShowSectorSelector] = useState(false);
+
+  if (!location) return <NoLocationPlaceholder message="Selecciona un punto para estimar la demanda en su radio." />;
 
   return (
     <div className="space-y-3">

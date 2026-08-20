@@ -33,7 +33,7 @@ export function useGeoScore(): GeoScoreResult {
   return useMemo<GeoScoreResult>(() => {
     if (!location) return { score: null, cafes: null, comuna: null };
 
-    const comuna = findComuna(location, comunas as any);
+    const comuna = findComuna(location, comunas ?? null);
     const nombreComuna = comuna?.properties?.nombre ?? null;
     const cafeCount = cafes?.length ?? null;
 

@@ -4,7 +4,7 @@
  * para que la UI pueda mostrar atribución y badges.
  */
 
-const cache = new Map<string, Promise<any>>();
+const cache = new Map<string, Promise<unknown>>();
 
 export async function loadDataset<T>(file: string): Promise<T> {
   if (cache.has(file)) return cache.get(file) as Promise<T>;
