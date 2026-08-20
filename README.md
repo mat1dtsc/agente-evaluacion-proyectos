@@ -4,7 +4,8 @@
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![deck.gl](https://img.shields.io/badge/deck.gl-9.x-000?logo=mapbox&logoColor=white)](https://deck.gl/)
-[![Tests](https://img.shields.io/badge/tests-147%20passing-22c55e)](#)
+[![Tests](https://img.shields.io/badge/tests-179%20passing-22c55e)](#)
+[![Lint](https://img.shields.io/badge/eslint-0%20warnings-22c55e)](#)
 [![License](https://img.shields.io/badge/license-Academic-orange)](#)
 
 SPA en React para evaluar **proyectos retail food en cualquier punto de Chile** combinando capas geográficas reales, modelo financiero a 60 períodos mensuales, marco normativo chileno, un **asesor IA** y exportadores Word/Excel/PDF profesionales.
@@ -31,8 +32,9 @@ npm install
 npm run dev          # http://localhost:5173 — SPA con HMR
 npm run build        # producción → dist/
 npm run preview      # http://localhost:4173 — sirve el build
-npm test             # 64 tests financieros (Vitest)
+npm test             # 179 tests (Vitest)
 npm run test:watch   # modo watch
+npm run lint         # eslint, 0 warnings tolerados
 ```
 
 ## 🛠 Stack
@@ -134,7 +136,7 @@ Estructura del flujo según curso EVP UAH (Mauricio Zúñiga):
 | `computeCostoLaboral(cargo)` | Costo total empresa con AFC + SIS + Mutual + gratificación + provisiones |
 | `regimenTributarioSugerido(ventas)` | Pro PYME 14D N°3 (25%) o General (27%) según UF |
 
-64 tests unitarios cubren: NPV, IRR, payback, amortización francesa, flujos puro/inversionista, breakeven, sensibilidad, planilla con leyes sociales, normativas, monthlyFlow con tasa mensual equivalente, perpetuidad steady-state, crédito tributario acumulado.
+Los tests de lógica financiera cubren: NPV, IRR, payback, amortización francesa, flujos puro/inversionista, breakeven, sensibilidad, planilla con leyes sociales, normativas, monthlyFlow con tasa mensual equivalente, perpetuidad steady-state, crédito tributario acumulado.
 
 ## 📋 Marco normativo chileno
 
@@ -193,11 +195,27 @@ Cache headers en `vercel.json`: `/data/*` 1 día stale-while-revalidate, `/asset
 ## 🧪 Tests
 
 ```bash
-npm test            # corre 64 tests, salida coloreada
+npm test            # corre 179 tests, salida coloreada
 npm run test:watch  # modo watch
+npm run lint        # eslint 9 (flat config), --max-warnings 0
 ```
 
-Cobertura: cálculos financieros, leyes sociales chilenas, normativas, flujo mensual, perpetuidad, crédito tributario.
+**Cobertura (179 tests en 28 archivos):**
+
+- **Finanzas** — NPV, IRR, payback, amortización francesa, flujos puro/inversionista, breakeven, sensibilidad, Monte Carlo, planilla con leyes sociales chilenas, normativas, flujo mensual con tasa equivalente, perpetuidad steady-state, crédito tributario acumulado.
+- **Asesor y comparador** — motor determinístico de reglas, construcción del contexto, comparación de zonas.
+- **Paneles** — render con y sin ubicación, selección de zona, botones de export, el comparador abriendo una zona en Financiero, y el Asesor cayendo al motor de reglas cuando el endpoint responde 503.
+- **Hooks** — modelo financiero, score geográfico, geocoder, datasets, asesor.
+
+Tres de los tests son de regresión de bugs reales: el orden de hooks en `DemandPanel` (crasheaba el panel al limpiar la ubicación), el foco del input en `AssumptionsPanel` y el cambio de pestaña en `Tabs`.
+
+## ⚡ Rendimiento
+
+La carga inicial es de **373 kB de JS** (125 kB gzip). El mapa (deck.gl), los gráficos (recharts) y los exportadores (xlsx + docx + jspdf, ~1 MB juntos) viven detrás de `import()` dinámico: cada pestaña y cada botón de export baja su chunk cuando se usa, no en el arranque.
+
+## 🔄 CI
+
+`.github/workflows/ci.yml` corre lint + tests + build en cada push a `main` y en cada pull request.
 
 ## 🚢 Deploy
 
